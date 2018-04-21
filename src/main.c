@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <whitgl/input.h>
 #include <whitgl/logging.h>
@@ -20,11 +21,14 @@ in vec3 fragmentPosition;\
 in vec3 fragmentColor;\
 in vec3 fragmentNormal;\
 out vec4 outColor;\
+uniform sampler2D palette;\
 void main()\
 {\
+	if(fragmentPosition.y < 0.0)\
+		discard;\
 	float band = (floor(fragmentPosition.y*8.0)+2)/8.0;\
-	vec3 col = vec3(band);\
-	outColor = vec4(col,1.0);\
+	vec4 col = texture( palette, vec2(band, 0.5) );\
+	outColor = vec4(col);\
 }\
 ";
 
@@ -69,7 +73,10 @@ whitgl_bool load_model(whitgl_int id, const char* filename)
 
 		whitgl_random_seed seed = whitgl_random_seed_init(top_down.x*1000+top_down.y*10000);
 		whitgl_float random = whitgl_random_float(&seed);
-		data[i*9+1] = (1-mag)*(0.3+((whitgl_fsin(pos.x*whitgl_tau*2)+1)/4))*0.8+random/32;
+
+		whitgl_fvec offset = {-0.2,-0.4};
+		whitgl_float offset_mag = whitgl_fclamp(whitgl_fvec_magnitude(whitgl_fvec_add(top_down, offset)),0,1);
+		data[i*9+1] = (1-mag)*(0.5+((whitgl_fsin(pos.x*whitgl_tau*2)+1)/4))*0.8+random/32-whitgl_fpow(1-offset_mag,3);
 	}
 
 	whitgl_sys_update_model_from_data(id, num_vertices, (char*)data);
@@ -84,6 +91,7 @@ int main()
 	setup.size.x = 440;
 	setup.size.y = 220;
 	setup.pixel_size = 2;
+	setup.start_focused = false;
 	setup.name = "game";
 
 	WHITGL_LOG("Initiating sys");
@@ -97,8 +105,14 @@ int main()
 
 	whitgl_shader model_shader = whitgl_shader_zero;
 	model_shader.fragment_src = model_src;
+	model_shader.num_uniforms = 1;
+	model_shader.uniforms[0].name = "palette";
+	model_shader.uniforms[0].type = WHITGL_UNIFORM_IMAGE;
 	if(!whitgl_change_shader( WHITGL_SHADER_MODEL, model_shader))
 		return false;
+
+	whitgl_set_shader_image(WHITGL_SHADER_MODEL, 0, 0);
+
 
 	WHITGL_LOG("Initiating sound");
 	whitgl_sound_init();
@@ -110,15 +124,23 @@ int main()
 	load_model(0, "data/model/land.wmd");
 
 
+	whitgl_sys_color src = {0x4a,0x42,0x82,0xff};
+	whitgl_sys_color dest = {0xff,0xff,0xff,0xff};
+	whitgl_sys_color ctrl = {0xb8,0xe3,0x92,0xff};
 
 	whitgl_sys_color colors[8];
 	whitgl_int i;
 	for(i=0; i<8; i++)
 	{
 		whitgl_float factor = i/8.0;
-		whitgl_sys_color col = {factor*0xff,factor*0xff,factor*0xff,0xff};
+		whitgl_sys_color a = whitgl_sys_color_blend(src, ctrl, factor);
+		whitgl_sys_color b = whitgl_sys_color_blend(ctrl, dest, factor);
+		whitgl_sys_color col = whitgl_sys_color_blend(a, b, factor);
 		colors[i] = col;
 	}
+
+	whitgl_ivec size = {8,1};
+	whitgl_sys_add_image_from_data(0, size, (unsigned char*)colors);
 
 	whitgl_sys_set_clear_color(colors[1]);
 
@@ -166,6 +188,19 @@ int main()
 		frame++;
 		if(frame == 128)
 			gif_finalize(&gif);
+
+
+#if defined _WIN32
+		if(whitgl_sys_window_focused())
+			Sleep(10);
+		else
+			Sleep(100);
+#else
+		if(whitgl_sys_window_focused())
+			usleep(10*1000);
+		else
+			usleep(100*1000);
+#endif
 	}
 
 	free(capture_data);
