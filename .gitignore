@@ -1,0 +1,8 @@
+build
+.ninja*
+build.ninja
+*.pyc
+input
+art/gifsrc
+args.txt
+data/model/play
