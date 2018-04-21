@@ -34,57 +34,6 @@ void main()\
 }\
 ";
 
-whitgl_bool load_model(whitgl_int id, const char* filename)
-{
-	FILE *src;
-	int read;
-	int readSize;
-	src = fopen(filename, "rb");
-	if (src == NULL)
-	{
-		WHITGL_LOG("Failed to open %s for load.", filename);
-		return false;
-	}
-	read = fread( &readSize, 1, sizeof(readSize), src );
-	if(read != sizeof(readSize))
-	{
-		WHITGL_LOG("Failed to read size from %s", filename);
-		fclose(src);
-		return false;
-	}
-	float* data = (float*)malloc(readSize);
-	read = fread( data, 1, readSize, src );
-	if(read != readSize)
-	{
-		WHITGL_LOG("Failed to read object from %s", filename);
-		fclose(src);
-		return false;
-	}
-	WHITGL_LOG("Loaded data from %s", filename);
-	fclose(src);
-
-	whitgl_int num_vertices = ((readSize/sizeof(float))/3)/3;
-
-	whitgl_int i;
-	for(i=0; i<num_vertices; i++)
-	{
-		whitgl_fvec3 pos = {data[i*9+0], data[i*9+1], data[i*9+2]};
-		whitgl_fvec top_down = {pos.x, pos.z};
-		whitgl_float mag = whitgl_fvec_magnitude(top_down);
-
-
-		whitgl_random_seed seed = whitgl_random_seed_init(top_down.x*1000+top_down.y*10000);
-		whitgl_float random = whitgl_random_float(&seed);
-
-		whitgl_fvec offset = {-0.2,-0.4};
-		whitgl_float offset_mag = whitgl_fclamp(whitgl_fvec_magnitude(whitgl_fvec_add(top_down, offset)),0,1);
-		data[i*9+1] = (1-mag)*(0.5+((whitgl_fsin(pos.x*whitgl_tau*2)+1)/4))*0.8+random/32-whitgl_fpow(1-offset_mag,3);
-	}
-
-	whitgl_sys_update_model_from_data(id, num_vertices, (char*)data);
-	return true;
-}
-
 int main()
 {
 	WHITGL_LOG("Starting main.");
@@ -125,8 +74,8 @@ int main()
 	WHITGL_LOG("Initiating timer");
 	whitgl_timer_init();
 
-	load_model(0, "data/model/land.wmd");
-
+	if(!ld41_island_init())
+		WHITGL_PANIC("Failed to load land.wmd");
 
 	ld41_island island = ld41_island_zero;
 	ld41_island island_prev = island;
@@ -184,6 +133,8 @@ int main()
 			whitgl_sys_update_image_from_data(0, color_image_size, (unsigned char*)colors);
 			whitgl_sys_set_clear_color(colors[1]);
 
+			ld41_island_update_model(&island);
+
 			if(whitgl_input_pressed(WHITGL_INPUT_ESC))
 				running = false;
 			if(whitgl_sys_should_close())
@@ -232,6 +183,8 @@ int main()
 	}
 
 	free(capture_data);
+
+	ld41_island_shutdown();
 
 	WHITGL_LOG("Shutting down input");
 	whitgl_input_shutdown();
