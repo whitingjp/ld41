@@ -144,12 +144,12 @@ int main()
 
 	whitgl_sys_set_clear_color(colors[1]);
 
-	gif_accumulator gif;
-	gif_start(&gif, setup.size, colors, num_colors);
-
-
-	whitgl_int frame = 0;
+	whitgl_int frames_remaining = 0;
 	whitgl_sys_color* capture_data = malloc(sizeof(whitgl_sys_color)*setup.size.x*setup.size.y);
+	gif_accumulator gif;
+
+
+	whitgl_float time = 0;
 
 	bool running = true;
 	while(running)
@@ -159,12 +159,18 @@ int main()
 		while(whitgl_timer_should_do_frame(60))
 		{
 			whitgl_input_update();
+			time = whitgl_fwrap(time+1/480.0, 0, 1);
+			if(whitgl_input_pressed(WHITGL_INPUT_A))
+			{
+				gif_start(&gif, setup.size, colors, num_colors);
+				frames_remaining = 128;
+			}
 			if(whitgl_input_pressed(WHITGL_INPUT_ESC))
 				running = false;
 			if(whitgl_sys_should_close())
 				running = false;
 		}
-		if(frame < 128)
+		if(frames_remaining > 0)
 			whitgl_sys_capture_frame_to_data(capture_data, true);
 		whitgl_sys_draw_init(0);
 
@@ -172,7 +178,10 @@ int main()
 		whitgl_fmat perspective = whitgl_fmat_perspective(fov, (float)setup.size.x/(float)setup.size.y, 0.1f, 20.0f);
 		whitgl_fvec3 up = {0,1,0};
 
-		whitgl_fmat rotate = whitgl_fmat_rot_y(frame*(whitgl_tau/128.0));
+		whitgl_float render_time = time;
+		if(frames_remaining > 0)
+			render_time = (128.0-frames_remaining)/128.0;
+		whitgl_fmat rotate = whitgl_fmat_rot_y(render_time*whitgl_tau);
 		whitgl_fvec3 camera_pos = {0,0.25,-1.3};
 		camera_pos = whitgl_fvec3_apply_fmat(camera_pos, rotate);
 		whitgl_fvec3 camera_to = {0,0,0};
@@ -182,12 +191,12 @@ int main()
 
 		whitgl_sys_draw_finish();
 
-		if(frame < 128)
+		if(frames_remaining > 0)
 		{
 			gif_add_frame(&gif, capture_data, 4);
 		}
-		frame++;
-		if(frame == 128)
+		frames_remaining--;
+		if(frames_remaining == 0)
 			gif_finalize(&gif);
 
 
