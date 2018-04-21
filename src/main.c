@@ -19,8 +19,6 @@ const char* model_src = "\
 #version 150\
 \n\
 in vec3 fragmentPosition;\
-in vec3 fragmentColor;\
-in vec3 fragmentNormal;\
 out vec4 outColor;\
 uniform sampler2D palette;\
 uniform float num_colors;\
@@ -29,7 +27,24 @@ void main()\
 	if(fragmentPosition.y < 0.0)\
 		discard;\
 	float band = (floor(fragmentPosition.y*num_colors*1.2)+2)/num_colors;\
-	vec4 col = texture( palette, vec2(band, 0.5) );\
+	vec4 col = texture( palette, vec2(band, 0.25) );\
+	outColor = vec4(col);\
+}\
+";
+
+const char* skysphere_src = "\
+#version 150\
+\n\
+in vec3 fragmentPosition;\
+in vec3 fragmentColor;\
+in vec3 fragmentNormal;\
+out vec4 outColor;\
+uniform sampler2D palette;\
+uniform float num_colors;\
+void main()\
+{\
+	float band = (floor(fragmentPosition.y*num_colors*(1.0/8.0))+2)/num_colors;\
+	vec4 col = texture( palette, vec2(band, 0.75) );\
 	outColor = vec4(col);\
 }\
 ";
@@ -39,9 +54,9 @@ int main()
 	WHITGL_LOG("Starting main.");
 
 	whitgl_sys_setup setup = whitgl_sys_setup_zero;
-	setup.size.x = 440;
-	setup.size.y = 220;
-	setup.pixel_size = 2;
+	setup.size.x = 440*2;
+	setup.size.y = 220*2;
+	setup.pixel_size = 1;
 	setup.start_focused = false;
 	setup.name = "game";
 
@@ -64,7 +79,18 @@ int main()
 	if(!whitgl_change_shader( WHITGL_SHADER_MODEL, model_shader))
 		return false;
 
+	whitgl_shader sky_shader = whitgl_shader_zero;
+	sky_shader.fragment_src = skysphere_src;
+	sky_shader.num_uniforms = 2;
+	sky_shader.uniforms[0].name = "palette";
+	sky_shader.uniforms[0].type = WHITGL_UNIFORM_IMAGE;
+	sky_shader.uniforms[1].name = "num_colors";
+	sky_shader.uniforms[1].type = WHITGL_UNIFORM_FLOAT;
+	if(!whitgl_change_shader( WHITGL_SHADER_EXTRA_0, sky_shader))
+		return false;
+
 	whitgl_set_shader_image(WHITGL_SHADER_MODEL, 0, 0);
+	whitgl_set_shader_image(WHITGL_SHADER_EXTRA_0, 0, 0);
 
 
 	WHITGL_LOG("Initiating sound");
@@ -77,6 +103,9 @@ int main()
 	if(!ld41_island_init())
 		WHITGL_PANIC("Failed to load land.wmd");
 
+	if(!whitgl_load_model(1, "data/model/skysphere.wmd"))
+		WHITGL_PANIC("Failed to load skysphere");
+
 	ld41_island island = ld41_island_zero;
 	ld41_island island_prev = island;
 	ld41_island island_target = island;
@@ -85,9 +114,10 @@ int main()
 	static whitgl_int num_colors = 8;
 
 	whitgl_set_shader_float(WHITGL_SHADER_MODEL, 1, num_colors);
+	whitgl_set_shader_float(WHITGL_SHADER_EXTRA_0, 1, num_colors);
 
-	whitgl_sys_color colors[num_colors];
-	whitgl_ivec color_image_size = {num_colors,1};
+	whitgl_sys_color colors[num_colors*2];
+	whitgl_ivec color_image_size = {num_colors,2};
 	whitgl_sys_add_image_from_data(0, color_image_size, (unsigned char*)colors);
 
 	whitgl_sys_set_clear_color(colors[1]);
@@ -109,13 +139,20 @@ int main()
 		while(whitgl_timer_should_do_frame(60))
 		{
 			whitgl_input_update();
-			// time = whitgl_fwrap(time+1/480.0, 0, 1);
+			time = whitgl_fwrap(time+1/480.0, 0, 1);
 			if(whitgl_input_pressed(WHITGL_INPUT_B))
 			{
 				gif_start(&gif, setup.size, colors, num_colors);
-				frames_remaining = 128;
+				frames_remaining = 256;
 			}
-
+			// if(frames_remaining % 32 == 0)
+			// {
+			// 	seed = whitgl_random_seed_init(whitgl_iwrap(frames_remaining/32+1, 0, 8)+8);
+			// 	island_prev = ld41_island_random(&seed);
+			// 	seed = whitgl_random_seed_init(whitgl_iwrap(frames_remaining/32, 0, 8)+8);
+			// 	island_target = ld41_island_random(&seed);
+			// 	island_lerp = 0;
+			// }
 			if(whitgl_input_pressed(WHITGL_INPUT_A))
 			{
 				island_prev = island;
@@ -124,12 +161,13 @@ int main()
 			}
 			if(island_lerp < 1)
 			{
-				island_lerp = island_lerp+1/60.0;
+				island_lerp = island_lerp+1/24.0;
 				if(island_lerp > 1)
 					island_lerp = 1;
 				island = ld41_island_lerp(&island_prev, &island_target, island_lerp);
 			}
 			ld41_color_ramp_palette(&island.color_ramp, &colors[1], num_colors-1);
+			ld41_color_ramp_palette(&island.sky_ramp, &colors[1+num_colors], num_colors-1);
 			whitgl_sys_update_image_from_data(0, color_image_size, (unsigned char*)colors);
 			whitgl_sys_set_clear_color(colors[1]);
 
@@ -150,7 +188,7 @@ int main()
 
 		whitgl_float render_time = time;
 		if(frames_remaining > 0)
-			render_time = (128.0-frames_remaining)/128.0;
+			render_time = (256.0-frames_remaining)/256.0;
 		whitgl_fmat rotate = whitgl_fmat_rot_y(render_time*whitgl_tau);
 		whitgl_fvec3 camera_pos = {0,0.25,-1.3};
 		camera_pos = whitgl_fvec3_apply_fmat(camera_pos, rotate);
@@ -158,6 +196,8 @@ int main()
 		whitgl_fmat view = whitgl_fmat_lookAt(camera_pos, camera_to, up);
 
 		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, whitgl_fmat_identity, view, perspective);
+		whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_0, whitgl_fmat_identity, view, perspective);
+
 
 		whitgl_sys_draw_finish();
 

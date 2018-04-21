@@ -66,16 +66,28 @@ void ld41_color_ramp_palette(const ld41_color_ramp* ramp, whitgl_sys_color* colo
 ld41_island ld41_island_random(whitgl_random_seed* seed)
 {
 	ld41_island island = ld41_island_zero;
-	// island.color_ramp.src.r = whitgl_random_int(seed, 0xff);
-	// island.color_ramp.src.g = whitgl_random_int(seed, 0xff);
-	// island.color_ramp.src.b = whitgl_random_int(seed, 0xff);
-	// island.color_ramp.dest.r = whitgl_random_int(seed, 0xff);
-	// island.color_ramp.dest.g = whitgl_random_int(seed, 0xff);
-	// island.color_ramp.dest.b = whitgl_random_int(seed, 0xff);
-	// island.color_ramp.ctrl.r = whitgl_random_int(seed, 0xff);
-	// island.color_ramp.ctrl.g = whitgl_random_int(seed, 0xff);
-	// island.color_ramp.ctrl.b = whitgl_random_int(seed, 0xff);
+	island.color_ramp.src.r = whitgl_random_int(seed, 0xff);
+	island.color_ramp.src.g = whitgl_random_int(seed, 0xff);
+	island.color_ramp.src.b = whitgl_random_int(seed, 0xff);
+	island.color_ramp.dest.r = whitgl_random_int(seed, 0xff);
+	island.color_ramp.dest.g = whitgl_random_int(seed, 0xff);
+	island.color_ramp.dest.b = whitgl_random_int(seed, 0xff);
+	island.color_ramp.ctrl.r = whitgl_random_int(seed, 0xff);
+	island.color_ramp.ctrl.g = whitgl_random_int(seed, 0xff);
+	island.color_ramp.ctrl.b = whitgl_random_int(seed, 0xff);
 
+	island.sky_ramp = island.color_ramp;
+	if(whitgl_random_float(seed) > 0.5)
+	{
+		island.sky_ramp.dest.r = whitgl_random_int(seed, 0xff);
+		island.sky_ramp.dest.g = whitgl_random_int(seed, 0xff);
+		island.sky_ramp.dest.b = whitgl_random_int(seed, 0xff);
+	} else
+	{
+		island.sky_ramp.ctrl.r = whitgl_random_int(seed, 0xff);
+		island.sky_ramp.ctrl.g = whitgl_random_int(seed, 0xff);
+		island.sky_ramp.ctrl.b = whitgl_random_int(seed, 0xff);
+	}
 	whitgl_int i;
 	for(i=0; i<NUM_BLOBS; i++)
 	{
@@ -92,6 +104,9 @@ ld41_island ld41_island_lerp(const ld41_island* src, const ld41_island* dest, wh
 	island.color_ramp.src = whitgl_sys_color_blend(src->color_ramp.src, dest->color_ramp.src, t);
 	island.color_ramp.dest = whitgl_sys_color_blend(src->color_ramp.dest, dest->color_ramp.dest, t);
 	island.color_ramp.ctrl = whitgl_sys_color_blend(src->color_ramp.ctrl, dest->color_ramp.ctrl, t);
+	island.sky_ramp.src = whitgl_sys_color_blend(src->sky_ramp.src, dest->sky_ramp.src, t);
+	island.sky_ramp.dest = whitgl_sys_color_blend(src->sky_ramp.dest, dest->sky_ramp.dest, t);
+	island.sky_ramp.ctrl = whitgl_sys_color_blend(src->sky_ramp.ctrl, dest->sky_ramp.ctrl, t);
 
 	whitgl_int i;
 	for(i=0; i<NUM_BLOBS; i++)
