@@ -275,8 +275,9 @@ int main()
 
 		whitgl_sys_enable_depth(false);
 
+		float ui_offset = -whitgl_fsmoothstep(1-ui_lerp,0,1)*setup.size.x;
 		whitgl_sprite sprite = {1, {0,0}, {6,12}};
-		whitgl_ivec text_pos = {2,2};
+		whitgl_ivec text_pos = {2+ui_offset,2};
 		whitgl_sys_draw_text(sprite, "character creation", text_pos);
 
 
