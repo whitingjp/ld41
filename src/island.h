@@ -6,9 +6,16 @@
 
 typedef struct
 {
-	whitgl_sys_color src;
-	whitgl_sys_color dest;
-	whitgl_sys_color ctrl;
+	whitgl_float r;
+	whitgl_float g;
+	whitgl_float b;
+} ld41_float_color;
+
+typedef struct
+{
+	ld41_float_color src;
+	ld41_float_color dest;
+	ld41_float_color ctrl;
 } ld41_color_ramp;
 
 void ld41_color_ramp_palette(const ld41_color_ramp* ramp, whitgl_sys_color* colors, whitgl_int num_colors);
@@ -29,8 +36,8 @@ typedef struct
 } ld41_island;
 static const ld41_island ld41_island_zero =
 {
-	{{0x32,0x5a,0x1a,0xff},{0xea,0x65,0x41,0xff},{0xb8,0xe3,0x92,0xff}},
-	{{0x32,0x5a,0x1a,0xff},{0xea,0x65,0x41,0xff},{0xb8,0xe3,0x92,0xff}},
+	{{0,0,0},{0,0,0},{0,0,0}},
+	{{0,0,0},{0,0,0},{0,0,0}},
 	{{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
 };
 

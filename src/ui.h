@@ -2,6 +2,7 @@
 #define LD41_UI_H_
 
 #include <whitgl/math.h>
+#include <island.h>
 
 typedef enum
 {
@@ -48,7 +49,7 @@ typedef struct
 } ld41_menu_pointer;
 static const ld41_menu_pointer ld41_menu_pointer_zero = {{GROUP_ROOT}, 0, 0};
 
-void ld41_menu_zero(ld41_menu* menu);
+void ld41_menu_zero(ld41_menu* menu, ld41_island* island);
 void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer);
 void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec draw_pos);
 

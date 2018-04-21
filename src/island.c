@@ -50,43 +50,58 @@ void ld41_island_shutdown()
 	free(_model_data);
 }
 
+whitgl_sys_color ld41_float_color_to_sys_color(ld41_float_color color)
+{
+	whitgl_sys_color col = {color.r*0xff, color.g*0xff, color.b*0xff, 0xff};
+	return col;
+}
+ld41_float_color ld41_float_color_blend(ld41_float_color a, ld41_float_color b, whitgl_float fac)
+{
+	whitgl_float inv = 1-fac;
+	ld41_float_color out;
+	out.r = (a.r*inv + b.r*fac);
+	out.g = (a.g*inv + b.g*fac);
+	out.b = (a.b*inv + b.b*fac);
+	return out;
+}
+
 void ld41_color_ramp_palette(const ld41_color_ramp* ramp, whitgl_sys_color* colors, whitgl_int num_colors)
 {
 	whitgl_int i;
 	for(i=0; i<num_colors; i++)
 	{
 		whitgl_float factor = i/((float)num_colors-1);
-		whitgl_sys_color a = whitgl_sys_color_blend(ramp->src, ramp->ctrl, factor);
-		whitgl_sys_color b = whitgl_sys_color_blend(ramp->ctrl, ramp->dest, factor);
-		whitgl_sys_color col = whitgl_sys_color_blend(a, b, factor);
-		colors[i] = col;
+		ld41_float_color a = ld41_float_color_blend(ramp->src, ramp->ctrl, factor);
+		ld41_float_color b = ld41_float_color_blend(ramp->ctrl, ramp->dest, factor);
+		ld41_float_color col = ld41_float_color_blend(a, b, factor);
+		colors[i] = ld41_float_color_to_sys_color(col);
 	}
 }
 
 ld41_island ld41_island_random(whitgl_random_seed* seed)
 {
 	ld41_island island = ld41_island_zero;
-	island.color_ramp.src.r = whitgl_random_int(seed, 0xff);
-	island.color_ramp.src.g = whitgl_random_int(seed, 0xff);
-	island.color_ramp.src.b = whitgl_random_int(seed, 0xff);
-	island.color_ramp.dest.r = whitgl_random_int(seed, 0xff);
-	island.color_ramp.dest.g = whitgl_random_int(seed, 0xff);
-	island.color_ramp.dest.b = whitgl_random_int(seed, 0xff);
-	island.color_ramp.ctrl.r = whitgl_random_int(seed, 0xff);
-	island.color_ramp.ctrl.g = whitgl_random_int(seed, 0xff);
-	island.color_ramp.ctrl.b = whitgl_random_int(seed, 0xff);
+	island.color_ramp.src.r = whitgl_random_float(seed);
+	island.color_ramp.src.g = whitgl_random_float(seed);
+	island.color_ramp.src.b = whitgl_random_float(seed);
+	island.color_ramp.dest.r = whitgl_random_float(seed);
+	island.color_ramp.dest.g = whitgl_random_float(seed);
+	island.color_ramp.dest.b = whitgl_random_float(seed);
+	island.color_ramp.ctrl.r = whitgl_random_float(seed);
+	island.color_ramp.ctrl.g = whitgl_random_float(seed);
+	island.color_ramp.ctrl.b = whitgl_random_float(seed);
 
 	island.sky_ramp = island.color_ramp;
 	if(whitgl_random_float(seed) > 0.5)
 	{
-		island.sky_ramp.dest.r = whitgl_random_int(seed, 0xff);
-		island.sky_ramp.dest.g = whitgl_random_int(seed, 0xff);
-		island.sky_ramp.dest.b = whitgl_random_int(seed, 0xff);
+		island.sky_ramp.dest.r = whitgl_random_float(seed);
+		island.sky_ramp.dest.g = whitgl_random_float(seed);
+		island.sky_ramp.dest.b = whitgl_random_float(seed);
 	} else
 	{
-		island.sky_ramp.ctrl.r = whitgl_random_int(seed, 0xff);
-		island.sky_ramp.ctrl.g = whitgl_random_int(seed, 0xff);
-		island.sky_ramp.ctrl.b = whitgl_random_int(seed, 0xff);
+		island.sky_ramp.ctrl.r = whitgl_random_float(seed);
+		island.sky_ramp.ctrl.g = whitgl_random_float(seed);
+		island.sky_ramp.ctrl.b = whitgl_random_float(seed);
 	}
 	whitgl_int i;
 	for(i=0; i<NUM_BLOBS; i++)
@@ -101,12 +116,12 @@ ld41_island ld41_island_random(whitgl_random_seed* seed)
 ld41_island ld41_island_lerp(const ld41_island* src, const ld41_island* dest, whitgl_float t)
 {
 	ld41_island island = ld41_island_zero;
-	island.color_ramp.src = whitgl_sys_color_blend(src->color_ramp.src, dest->color_ramp.src, t);
-	island.color_ramp.dest = whitgl_sys_color_blend(src->color_ramp.dest, dest->color_ramp.dest, t);
-	island.color_ramp.ctrl = whitgl_sys_color_blend(src->color_ramp.ctrl, dest->color_ramp.ctrl, t);
-	island.sky_ramp.src = whitgl_sys_color_blend(src->sky_ramp.src, dest->sky_ramp.src, t);
-	island.sky_ramp.dest = whitgl_sys_color_blend(src->sky_ramp.dest, dest->sky_ramp.dest, t);
-	island.sky_ramp.ctrl = whitgl_sys_color_blend(src->sky_ramp.ctrl, dest->sky_ramp.ctrl, t);
+	island.color_ramp.src = ld41_float_color_blend(src->color_ramp.src, dest->color_ramp.src, t);
+	island.color_ramp.dest = ld41_float_color_blend(src->color_ramp.dest, dest->color_ramp.dest, t);
+	island.color_ramp.ctrl = ld41_float_color_blend(src->color_ramp.ctrl, dest->color_ramp.ctrl, t);
+	island.sky_ramp.src = ld41_float_color_blend(src->sky_ramp.src, dest->sky_ramp.src, t);
+	island.sky_ramp.dest = ld41_float_color_blend(src->sky_ramp.dest, dest->sky_ramp.dest, t);
+	island.sky_ramp.ctrl = ld41_float_color_blend(src->sky_ramp.ctrl, dest->sky_ramp.ctrl, t);
 
 	whitgl_int i;
 	for(i=0; i<NUM_BLOBS; i++)

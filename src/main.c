@@ -74,6 +74,19 @@ void main()\
 }\
 ";
 
+const char* flat_src = "\
+#version 150\
+\n\
+uniform vec4 color;\
+out vec4 outColor;\
+void main()\
+{\
+	if(mod(gl_FragCoord.y,2) < 1.5)\
+		discard;\
+	outColor = color;\
+}\
+";
+
 int main()
 {
 	WHITGL_LOG("Starting main.");
@@ -93,6 +106,15 @@ int main()
 	}
 
 	whitgl_sys_enable_depth(true);
+
+	WHITGL_LOG("Loading shaders");
+	whitgl_shader flat_shader = whitgl_shader_zero;
+	flat_shader.fragment_src = flat_src;
+	flat_shader.num_uniforms = 1;
+	flat_shader.uniforms[0].type = WHITGL_UNIFORM_COLOR;
+	flat_shader.uniforms[0].name = "color";
+	if(!whitgl_change_shader( WHITGL_SHADER_FLAT, flat_shader))
+		return false;
 
 	whitgl_shader model_shader = whitgl_shader_zero;
 	model_shader.fragment_src = model_src;
@@ -166,8 +188,8 @@ int main()
 	whitgl_sys_color* capture_data = malloc(sizeof(whitgl_sys_color)*setup.size.x*setup.size.y);
 	gif_accumulator gif;
 
-	ld41_menu* menu = malloc(sizeof(ld41_menu_zero));
-	ld41_menu_zero(menu);
+	ld41_menu* menu = malloc(sizeof(ld41_menu));
+	ld41_menu_zero(menu, &island);
 	ld41_menu_pointer menu_pointer = ld41_menu_pointer_zero;
 
 	whitgl_bool ui_up = false;
@@ -200,7 +222,7 @@ int main()
 			// }
 			if(whitgl_input_pressed(WHITGL_INPUT_B))
 			{
-				seed = whitgl_random_seed_init(whitgl_sys_get_time()*10000);
+				// seed = whitgl_random_seed_init(whitgl_sys_get_time()*10000);
 				island_prev = island;
 				island_target = ld41_island_random(&seed);
 				island_lerp = 0;
@@ -281,7 +303,7 @@ int main()
 
 		whitgl_sys_enable_depth(false);
 
-		whitgl_ivec ui_offset = {2-whitgl_fsmoothstep(1-ui_lerp,0,1)*setup.size.x, 2};
+		whitgl_ivec ui_offset = {16-whitgl_fsmoothstep(1-ui_lerp,0,1)*setup.size.x, 16};
 
 		ld41_menu_draw(menu, &menu_pointer, ui_offset);
 
