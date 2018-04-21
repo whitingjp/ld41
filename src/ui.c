@@ -19,11 +19,13 @@ void _ld41_menu_common(ld41_menu* menu, ld41_menu_group group, const char* name)
 void _ld41_menu_add_title(ld41_menu* menu, ld41_menu_group group, const char* name)
 {
 	_ld41_menu_common(menu, group, name);
+	menu->items[menu->num_items].type = TYPE_TITLE;
 	menu->num_items++;
 }
 void _ld41_menu_add_slider(ld41_menu* menu, ld41_menu_group group, const char* name, whitgl_float* val, whitgl_float min, whitgl_float max)
 {
 	_ld41_menu_common(menu, group, name);
+	menu->items[menu->num_items].type = TYPE_SLIDER;
 	menu->items[menu->num_items].slider.value = val;
 	menu->items[menu->num_items].slider.min = min;
 	menu->items[menu->num_items].slider.max = max;
@@ -32,25 +34,71 @@ void _ld41_menu_add_slider(ld41_menu* menu, ld41_menu_group group, const char* n
 void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 {
 	menu->num_items = 0;
-	_ld41_menu_add_title(menu, GROUP_ROOT, "hello");
-	_ld41_menu_add_title(menu, GROUP_ROOT, "world");
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "red", &island->color_ramp.src.r, 0, 1);
+	_ld41_menu_add_title(menu, GROUP_COLORS, "bottom");
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "red", &island->color_ramp.src.r, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "green", &island->color_ramp.src.g, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "blue", &island->color_ramp.src.b, 0, 1);
+	_ld41_menu_add_title(menu, GROUP_COLORS, "middle");
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "red", &island->color_ramp.ctrl.r, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "green", &island->color_ramp.ctrl.g, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "blue", &island->color_ramp.ctrl.b, 0, 1);
+	_ld41_menu_add_title(menu, GROUP_COLORS, "top");
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "red", &island->color_ramp.dest.r, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "green", &island->color_ramp.dest.g, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "blue", &island->color_ramp.dest.b, 0, 1);
+	_ld41_menu_add_title(menu, GROUP_ROOT, "sky");
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "red", &island->sky_ramp.dest.r, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "green", &island->sky_ramp.dest.g, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "blue", &island->sky_ramp.dest.b, 0, 1);
 }
 void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer)
 {
 	ld41_menu_group current_group = pointer->group[pointer->depth];
-	whitgl_int num_active_items = 0;
 	whitgl_int i;
+	whitgl_int num_active_items = -1;
 	for(i=0; i<menu->num_items; i++)
 	{
 		if(menu->items[i].group != current_group)
 			continue;
 		num_active_items++;
+		if(num_active_items != pointer->highlighted)
+			continue;
+		if(menu->items[i].type == TYPE_SLIDER)
+		{
+			whitgl_fvec joystick = whitgl_input_joystick();
+			*menu->items[i].slider.value = whitgl_fclamp(*menu->items[i].slider.value+joystick.x*0.02, 0, 1);
+		}
 	}
+	num_active_items++;
+	whitgl_int move_dir = 0;
 	if(whitgl_input_pressed(WHITGL_INPUT_DOWN))
-		pointer->highlighted = whitgl_iclamp(pointer->highlighted+1, 0, num_active_items-1);
+		move_dir++;
 	if(whitgl_input_pressed(WHITGL_INPUT_UP))
-		pointer->highlighted = whitgl_iclamp(pointer->highlighted-1, 0, num_active_items-1);
+		move_dir--;
+	if(!move_dir)
+		return;
+	whitgl_int trial = pointer->highlighted;
+	while(true)
+	{
+		trial += move_dir;
+		num_active_items = -1;
+		for(i=0; i<menu->num_items; i++)
+		{
+			if(menu->items[i].group != current_group)
+				continue;
+			num_active_items++;
+			if(num_active_items != trial)
+				continue;
+			if(menu->items[i].type != TYPE_TITLE)
+			{
+				pointer->highlighted = trial;
+				return;
+			}
+		}
+		num_active_items++;
+		if(trial < 0 || trial >= num_active_items)
+			return;
+	}
 }
 void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec draw_pos)
 {
@@ -61,17 +109,29 @@ void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whi
 	ld41_menu_group current_group = pointer->group[pointer->depth];
 	for(i=0; i<menu->num_items; i++)
 	{
+		whitgl_ivec p = draw_pos;
+		whitgl_sys_color highlight_color = {0xff,0xff,0xff,0xff/2};
+		whitgl_sys_color ui_color = {0xff,0xff,0xff,0xff};
 		if(menu->items[i].group != current_group)
 			continue;
+		if(menu->items[i].type != TYPE_TITLE)
+			p.x += sprite.size.x*2;
 		if(num_active_items == pointer->highlighted)
 		{
-			whitgl_sys_color highlight_color = {0xff,0xff,0xff,0xff};
-			whitgl_iaabb left_box = {{draw_pos.x-2-8, draw_pos.y-1}, {draw_pos.x-2, draw_pos.y+sprite.size.y}};
+			whitgl_iaabb left_box = {{p.x-2-8, p.y-1}, {p.x-2, p.y+sprite.size.y}};
 			whitgl_sys_draw_iaabb(left_box, highlight_color);
-			whitgl_iaabb right_box = {{draw_pos.x+sprite.size.x*strlen(menu->items[i].name)+1, draw_pos.y-1}, {draw_pos.x+sprite.size.x*strlen(menu->items[i].name)+1+8, draw_pos.y+sprite.size.y}};
+			whitgl_iaabb right_box = {{p.x+sprite.size.x*strlen(menu->items[i].name)+1, p.y-1}, {p.x+sprite.size.x*strlen(menu->items[i].name)+1+8, p.y+sprite.size.y}};
 			whitgl_sys_draw_iaabb(right_box, highlight_color);
 		}
-		whitgl_sys_draw_text(sprite, menu->items[i].name, draw_pos);
+		whitgl_sys_draw_text(sprite, menu->items[i].name, p);
+		if(menu->items[i].type == TYPE_SLIDER)
+		{
+			whitgl_iaabb slider_box = {{p.x+sprite.size.x*8, p.y}, {p.x+sprite.size.x*16+1+8, p.y+sprite.size.y-1}};
+			whitgl_sys_draw_hollow_iaabb(slider_box, 1, ui_color);
+			whitgl_int total_width = slider_box.b.x-slider_box.a.x-2;
+			slider_box.b.x = slider_box.a.x+1+total_width*(*menu->items[i].slider.value);
+			whitgl_sys_draw_iaabb(slider_box, ui_color);
+		}
 		draw_pos.y += sprite.size.y;
 		num_active_items++;
 	}

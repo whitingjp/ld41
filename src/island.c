@@ -92,17 +92,9 @@ ld41_island ld41_island_random(whitgl_random_seed* seed)
 	island.color_ramp.ctrl.b = whitgl_random_float(seed);
 
 	island.sky_ramp = island.color_ramp;
-	if(whitgl_random_float(seed) > 0.5)
-	{
-		island.sky_ramp.dest.r = whitgl_random_float(seed);
-		island.sky_ramp.dest.g = whitgl_random_float(seed);
-		island.sky_ramp.dest.b = whitgl_random_float(seed);
-	} else
-	{
-		island.sky_ramp.ctrl.r = whitgl_random_float(seed);
-		island.sky_ramp.ctrl.g = whitgl_random_float(seed);
-		island.sky_ramp.ctrl.b = whitgl_random_float(seed);
-	}
+	island.sky_ramp.dest.r = whitgl_random_float(seed);
+	island.sky_ramp.dest.g = whitgl_random_float(seed);
+	island.sky_ramp.dest.b = whitgl_random_float(seed);
 	whitgl_int i;
 	for(i=0; i<NUM_BLOBS; i++)
 	{

@@ -81,9 +81,9 @@ uniform vec4 color;\
 out vec4 outColor;\
 void main()\
 {\
-	if(mod(gl_FragCoord.y,2) < 1.5)\
+	if(color.a < 0.6 && mod(gl_FragCoord.y,2) < 1.5)\
 		discard;\
-	outColor = color;\
+	outColor = vec4(color.rgb,1);\
 }\
 ";
 
@@ -236,7 +236,11 @@ int main()
 				ui_lerp = whitgl_fclamp(ui_lerp-0.05, 0, 1);
 
 			if(ui_up)
+			{
 				ld41_menu_update(menu, &menu_pointer);
+				island.sky_ramp.src = island.color_ramp.src;
+				island.sky_ramp.ctrl = island.color_ramp.ctrl;
+			}
 
 			const whitgl_fvec3 regular_camera_to = {0,0,0};
 			const whitgl_fvec3 regular_camera_pos = {0,0.25,-1.3};

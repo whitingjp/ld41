@@ -7,6 +7,7 @@
 typedef enum
 {
 	GROUP_ROOT,
+	GROUP_COLORS,
 	GROUP_MAX,
 } ld41_menu_group;
 
