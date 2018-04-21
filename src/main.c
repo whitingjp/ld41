@@ -67,7 +67,7 @@ uniform sampler2D palette;\
 uniform float num_colors;\
 void main()\
 {\
-	float band = (floor(fragmentPosition.y*num_colors*(1.0/8.0))+2)/num_colors;\
+	float band = (floor(clamp(fragmentPosition.y,-1,8)*num_colors*(1.0/8.0))+2)/num_colors;\
 	vec4 col = texture( palette, vec2(band, 0.75) );\
 	outColor = vec4(col);\
 }\
@@ -147,10 +147,11 @@ int main()
 	if(!whitgl_load_model(1, "data/model/skysphere.wmd"))
 		WHITGL_PANIC("Failed to load skysphere");
 
-	ld41_island island = ld41_island_zero;
+	whitgl_random_seed seed = whitgl_random_seed_init(whitgl_sys_get_time()*10000);
+	ld41_island island = ld41_island_random(&seed);
 	ld41_island island_prev = island;
 	ld41_island island_target = island;
-	whitgl_float island_lerp = 1;
+	whitgl_float island_lerp = 0.9;
 
 	whitgl_sys_color colors[num_colors*2];
 	whitgl_ivec color_image_size = {num_colors,2};
@@ -165,8 +166,11 @@ int main()
 	gif_accumulator gif;
 
 
-	whitgl_random_seed seed = whitgl_random_seed_init(whitgl_sys_get_time()*10000);
 
+	whitgl_bool ui_up = false;
+	whitgl_float ui_lerp = 0;
+	whitgl_fvec3 camera_to = whitgl_fvec3_zero;
+	whitgl_fvec3 camera_pos = whitgl_fvec3_zero;
 	whitgl_float time = 0;
 
 	bool running = true;
@@ -178,7 +182,7 @@ int main()
 		{
 			whitgl_input_update();
 			time = whitgl_fwrap(time+1/480.0, 0, 1);
-			if(whitgl_input_pressed(WHITGL_INPUT_B))
+			if(whitgl_input_pressed(WHITGL_INPUT_X))
 			{
 				gif_start(&gif, setup.size, colors, num_colors*2);
 				frames_remaining = 128;
@@ -191,25 +195,43 @@ int main()
 			// 	island_target = ld41_island_random(&seed);
 			// 	island_lerp = 0;
 			// }
-			if(whitgl_input_pressed(WHITGL_INPUT_A))
+			if(whitgl_input_pressed(WHITGL_INPUT_B))
 			{
+				seed = whitgl_random_seed_init(whitgl_sys_get_time()*10000);
 				island_prev = island;
 				island_target = ld41_island_random(&seed);
 				island_lerp = 0;
 			}
+			if(whitgl_input_pressed(WHITGL_INPUT_A))
+				ui_up = !ui_up;
+
+			if(ui_up)
+				ui_lerp = whitgl_fclamp(ui_lerp+0.05, 0, 1);
+			else
+				ui_lerp = whitgl_fclamp(ui_lerp-0.05, 0, 1);
+
+			const whitgl_fvec3 regular_camera_to = {0,0,0};
+			const whitgl_fvec3 regular_camera_pos = {0,0.25,-1.3};
+			const whitgl_fvec3 ui_camera_to = {0.5,0,0};
+			const whitgl_fvec3 ui_camera_pos = {0,0.3,-1.6};
+
+			whitgl_float ui_lerp_smooth = whitgl_fsmoothstep(ui_lerp, 0, 1);
+			camera_to = whitgl_fvec3_interpolate(regular_camera_to, ui_camera_to, ui_lerp_smooth);
+			camera_pos = whitgl_fvec3_interpolate(regular_camera_pos, ui_camera_pos, ui_lerp_smooth);
 			if(island_lerp < 1)
 			{
 				island_lerp = island_lerp+1/24.0;
 				if(island_lerp > 1)
 					island_lerp = 1;
 				island = ld41_island_lerp(&island_prev, &island_target, island_lerp);
+				ld41_island_update_model(&island);
 			}
 			ld41_color_ramp_palette(&island.color_ramp, &colors[1], num_colors-1);
 			ld41_color_ramp_palette(&island.sky_ramp, &colors[1+num_colors], num_colors-1);
 			whitgl_sys_update_image_from_data(0, color_image_size, (unsigned char*)colors);
 			whitgl_sys_set_clear_color(colors[1]);
 
-			ld41_island_update_model(&island);
+
 
 			if(whitgl_input_pressed(WHITGL_INPUT_ESC))
 				running = false;
@@ -230,10 +252,9 @@ int main()
 		if(frames_remaining > 0)
 			render_time = (128.0-frames_remaining)/128.0;
 		whitgl_fmat rotate = whitgl_fmat_rot_y(render_time*whitgl_tau);
-		whitgl_fvec3 camera_pos = {0,0.25,-1.3};
-		camera_pos = whitgl_fvec3_apply_fmat(camera_pos, rotate);
-		whitgl_fvec3 camera_to = {0,0,0};
-		whitgl_fmat view = whitgl_fmat_lookAt(camera_pos, camera_to, up);
+		whitgl_fvec3 spun_camera_pos = whitgl_fvec3_apply_fmat(camera_pos, rotate);
+		whitgl_fvec3 spun_camera_to = whitgl_fvec3_apply_fmat(camera_to, rotate);
+		whitgl_fmat view = whitgl_fmat_lookAt(spun_camera_pos, spun_camera_to, up);
 
 
 		glFrontFace(GL_CW);

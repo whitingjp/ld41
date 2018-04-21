@@ -135,7 +135,7 @@ float _ld41_island_height_at_point(const ld41_island* island, whitgl_fvec p)
 		height += _ld41_blob_height(&island->blobs[i], p);
 	}
 	whitgl_float mag = whitgl_fvec_magnitude(p);
-	whitgl_float border = whitgl_fsmoothstep(1-mag, 0.0, 0.1);
+	whitgl_float border = whitgl_fsmoothstep(1-mag, 0.1, 0.2);
 	height *= border;
 	height -= 0.1;
 	return height;
