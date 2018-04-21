@@ -129,18 +129,17 @@ int main()
 
 
 	ld41_island island = ld41_island_zero;
+	ld41_island island_prev = island;
+	ld41_island island_target = island;
+	whitgl_float island_lerp = 1;
 
 	static whitgl_int num_colors = 8;
 
 	whitgl_set_shader_float(WHITGL_SHADER_MODEL, 1, num_colors);
 
 	whitgl_sys_color colors[num_colors];
-	whitgl_sys_color magic_pink = {0xff,0x00,0xff,0x00};
-	colors[0] = magic_pink;
-	ld41_color_ramp_palette(&island.color_ramp, &colors[1], num_colors-1);
-
-	whitgl_ivec size = {num_colors,1};
-	whitgl_sys_add_image_from_data(0, size, (unsigned char*)colors);
+	whitgl_ivec color_image_size = {num_colors,1};
+	whitgl_sys_add_image_from_data(0, color_image_size, (unsigned char*)colors);
 
 	whitgl_sys_set_clear_color(colors[1]);
 
@@ -148,6 +147,8 @@ int main()
 	whitgl_sys_color* capture_data = malloc(sizeof(whitgl_sys_color)*setup.size.x*setup.size.y);
 	gif_accumulator gif;
 
+
+	whitgl_random_seed seed = whitgl_random_seed_init(whitgl_sys_get_time()*10000);
 
 	whitgl_float time = 0;
 
@@ -160,11 +161,29 @@ int main()
 		{
 			whitgl_input_update();
 			time = whitgl_fwrap(time+1/480.0, 0, 1);
-			if(whitgl_input_pressed(WHITGL_INPUT_A))
+			if(whitgl_input_pressed(WHITGL_INPUT_B))
 			{
 				gif_start(&gif, setup.size, colors, num_colors);
 				frames_remaining = 128;
 			}
+
+			if(whitgl_input_pressed(WHITGL_INPUT_A))
+			{
+				island_prev = island;
+				island_target = ld41_island_random(&seed);
+				island_lerp = 0;
+			}
+			if(island_lerp < 1)
+			{
+				island_lerp = island_lerp+1/10.0;
+				if(island_lerp > 1)
+					island_lerp = 1;
+				island = ld41_island_lerp(&island_prev, &island_target, island_lerp);
+			}
+			ld41_color_ramp_palette(&island.color_ramp, &colors[1], num_colors-1);
+			whitgl_sys_update_image_from_data(0, color_image_size, (unsigned char*)colors);
+			whitgl_sys_set_clear_color(colors[1]);
+
 			if(whitgl_input_pressed(WHITGL_INPUT_ESC))
 				running = false;
 			if(whitgl_sys_should_close())
@@ -194,11 +213,10 @@ int main()
 		if(frames_remaining > 0)
 		{
 			gif_add_frame(&gif, capture_data, 4);
+			frames_remaining--;
+			if(frames_remaining == 0)
+				gif_finalize(&gif);
 		}
-		frames_remaining--;
-		if(frames_remaining == 0)
-			gif_finalize(&gif);
-
 
 #if defined _WIN32
 		if(whitgl_sys_window_focused())
