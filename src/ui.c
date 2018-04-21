@@ -16,10 +16,11 @@ void _ld41_menu_common(ld41_menu* menu, ld41_menu_group group, const char* name)
 	strncpy(menu->items[menu->num_items].name, name, MAX_NAME_LENGTH);
 }
 
-void _ld41_menu_add_title(ld41_menu* menu, ld41_menu_group group, const char* name)
+void _ld41_menu_add_submenu(ld41_menu* menu, ld41_menu_group group, const char* name, ld41_menu_group submenu)
 {
 	_ld41_menu_common(menu, group, name);
-	menu->items[menu->num_items].type = TYPE_TITLE;
+	menu->items[menu->num_items].type = TYPE_SUBMENU;
+	menu->items[menu->num_items].submenu = submenu;
 	menu->num_items++;
 }
 void _ld41_menu_add_slider(ld41_menu* menu, ld41_menu_group group, const char* name, whitgl_float* val, whitgl_float min, whitgl_float max)
@@ -34,88 +35,103 @@ void _ld41_menu_add_slider(ld41_menu* menu, ld41_menu_group group, const char* n
 void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 {
 	menu->num_items = 0;
-	_ld41_menu_add_title(menu, GROUP_ROOT, "bump 1");
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "angle", &island->blobs[0].angle, 0, whitgl_tau);
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "dist", &island->blobs[0].dist, -1, 1);
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "height", &island->blobs[0].height, 0, 1);
-	_ld41_menu_add_title(menu, GROUP_ROOT, "bump 2");
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "angle", &island->blobs[1].angle, 0, whitgl_tau);
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "dist", &island->blobs[1].dist, -1, 1);
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "height", &island->blobs[1].height, 0, 1);
-	_ld41_menu_add_title(menu, GROUP_ROOT, "bump 3");
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "angle", &island->blobs[2].angle, 0, whitgl_tau);
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "dist", &island->blobs[2].dist, -1, 1);
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "height", &island->blobs[2].height, 0, 1);
-	_ld41_menu_add_title(menu, GROUP_ROOT, "bump 4");
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "angle", &island->blobs[3].angle, 0, whitgl_tau);
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "dist", &island->blobs[3].dist, -1, 1);
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "height", &island->blobs[3].height, 0, 1);
+	_ld41_menu_add_submenu(menu, GROUP_ROOT, "bumps", GROUP_BUMPS);
+	_ld41_menu_add_submenu(menu, GROUP_BUMPS, "bump 1", GROUP_BUMPS_1);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_1, "angle", &island->blobs[0].angle, 0, whitgl_tau);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_1, "dist", &island->blobs[0].dist, -1, 1);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_1, "height", &island->blobs[0].height, 0, 1);
+	_ld41_menu_add_submenu(menu, GROUP_BUMPS, "bump 2", GROUP_BUMPS_2);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_2, "angle", &island->blobs[1].angle, 0, whitgl_tau);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_2, "dist", &island->blobs[1].dist, -1, 1);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_2, "height", &island->blobs[1].height, 0, 1);
+	_ld41_menu_add_submenu(menu, GROUP_BUMPS, "bump 3", GROUP_BUMPS_3);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_3, "angle", &island->blobs[2].angle, 0, whitgl_tau);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_3, "dist", &island->blobs[2].dist, -1, 1);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_3, "height", &island->blobs[2].height, 0, 1);
+	_ld41_menu_add_submenu(menu, GROUP_BUMPS, "bump 4", GROUP_BUMPS_4);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_4, "angle", &island->blobs[3].angle, 0, whitgl_tau);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_4, "dist", &island->blobs[3].dist, -1, 1);
+	_ld41_menu_add_slider(menu, GROUP_BUMPS_4, "height", &island->blobs[3].height, 0, 1);
 
-	_ld41_menu_add_title(menu, GROUP_COLORS, "bottom");
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "red", &island->color_ramp.src.r, 0, 1);
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "green", &island->color_ramp.src.g, 0, 1);
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "blue", &island->color_ramp.src.b, 0, 1);
-	_ld41_menu_add_title(menu, GROUP_COLORS, "middle");
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "red", &island->color_ramp.ctrl.r, 0, 1);
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "green", &island->color_ramp.ctrl.g, 0, 1);
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "blue", &island->color_ramp.ctrl.b, 0, 1);
-	_ld41_menu_add_title(menu, GROUP_COLORS, "top");
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "red", &island->color_ramp.dest.r, 0, 1);
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "green", &island->color_ramp.dest.g, 0, 1);
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "blue", &island->color_ramp.dest.b, 0, 1);
-	_ld41_menu_add_title(menu, GROUP_COLORS, "sky");
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "red", &island->sky_ramp.dest.r, 0, 1);
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "green", &island->sky_ramp.dest.g, 0, 1);
-	_ld41_menu_add_slider(menu, GROUP_COLORS, "blue", &island->sky_ramp.dest.b, 0, 1);
+	_ld41_menu_add_submenu(menu, GROUP_ROOT, "colors", GROUP_COLORS);
+	_ld41_menu_add_submenu(menu, GROUP_COLORS, "bottom", GROUP_COLORS_BOTTOM);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_BOTTOM, "red", &island->color_ramp.src.r, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_BOTTOM, "green", &island->color_ramp.src.g, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_BOTTOM, "blue", &island->color_ramp.src.b, 0, 1);
+	_ld41_menu_add_submenu(menu, GROUP_COLORS, "middle", GROUP_COLORS_MID);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_MID, "red", &island->color_ramp.ctrl.r, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_MID, "green", &island->color_ramp.ctrl.g, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_MID, "blue", &island->color_ramp.ctrl.b, 0, 1);
+	_ld41_menu_add_submenu(menu, GROUP_COLORS, "top", GROUP_COLORS_TOP);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_TOP, "red", &island->color_ramp.dest.r, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_TOP, "green", &island->color_ramp.dest.g, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_TOP, "blue", &island->color_ramp.dest.b, 0, 1);
+	_ld41_menu_add_submenu(menu, GROUP_COLORS, "sky", GROUP_COLORS_SKY);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_SKY, "red", &island->sky_ramp.dest.r, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_SKY, "green", &island->sky_ramp.dest.g, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS_SKY, "blue", &island->sky_ramp.dest.b, 0, 1);
 }
 void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer)
 {
-	ld41_menu_group current_group = pointer->group[pointer->depth];
+	whitgl_int move_dir = 0;
+
 	whitgl_int i;
-	whitgl_int num_active_items = -1;
 	for(i=0; i<menu->num_items; i++)
 	{
-		if(menu->items[i].group != current_group)
+		whitgl_int depth = -1;
+		whitgl_int j;
+		for(j=0; j<pointer->depth; j++)
+			if(menu->items[i].group == pointer->group[j])
+				depth = j;
+		if(depth == -1)
 			continue;
-		num_active_items++;
-		if(num_active_items != pointer->highlighted)
+		if(i != pointer->highlighted)
 			continue;
+
+		if(whitgl_input_pressed(WHITGL_INPUT_B) && pointer->depth > 1)
+		{
+			pointer->depth--;
+			move_dir--;
+		}
 		if(menu->items[i].type == TYPE_SLIDER)
 		{
 			whitgl_fvec joystick = whitgl_input_joystick();
 			whitgl_float dist = menu->items[i].slider.max-menu->items[i].slider.min;
-			*menu->items[i].slider.value = whitgl_fclamp(*menu->items[i].slider.value+joystick.x*dist*0.02, menu->items[i].slider.min,  menu->items[i].slider.max);
+			whitgl_float speed = joystick.x*dist*0.015;
+			if(whitgl_input_held(WHITGL_INPUT_A))
+				speed *= 4;
+			*menu->items[i].slider.value = whitgl_fclamp(*menu->items[i].slider.value+speed, menu->items[i].slider.min,  menu->items[i].slider.max);
+		}
+		if(menu->items[i].type == TYPE_SUBMENU)
+		{
+			if(whitgl_input_pressed(WHITGL_INPUT_A))
+			{
+				pointer->depth = depth+1;
+				pointer->group[pointer->depth++] = menu->items[i].submenu;
+				move_dir++;
+			}
 		}
 	}
-	num_active_items++;
-	whitgl_int move_dir = 0;
+
 	if(whitgl_input_pressed(WHITGL_INPUT_DOWN))
 		move_dir++;
 	if(whitgl_input_pressed(WHITGL_INPUT_UP))
 		move_dir--;
-	if(!move_dir)
-		return;
-	whitgl_int trial = pointer->highlighted;
-	while(true)
+
+	whitgl_int trial = pointer->highlighted+move_dir;
+	while(trial >= 0 && trial < menu->num_items)
 	{
-		trial += move_dir;
-		num_active_items = -1;
-		for(i=0; i<menu->num_items; i++)
+		whitgl_int depth = -1;
+		whitgl_int j;
+		for(j=0; j<pointer->depth; j++)
+			if(menu->items[trial].group == pointer->group[j])
+				depth = j;
+		if(depth != -1)
 		{
-			if(menu->items[i].group != current_group)
-				continue;
-			num_active_items++;
-			if(num_active_items != trial)
-				continue;
-			if(menu->items[i].type != TYPE_TITLE)
-			{
-				pointer->highlighted = trial;
-				return;
-			}
-		}
-		num_active_items++;
-		if(trial < 0 || trial >= num_active_items)
+			pointer->highlighted = trial;
 			return;
+		}
+		trial += move_dir;
 	}
 }
 void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec draw_pos)
@@ -123,18 +139,23 @@ void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whi
 	whitgl_sprite sprite = {1, {0,0}, {6,12}};
 
 	whitgl_int i;
-	whitgl_int num_active_items = 0;
-	ld41_menu_group current_group = pointer->group[pointer->depth];
 	for(i=0; i<menu->num_items; i++)
 	{
 		whitgl_ivec p = draw_pos;
 		whitgl_sys_color highlight_color = {0xff,0xff,0xff,0xff/2};
 		whitgl_sys_color ui_color = {0xff,0xff,0xff,0xff};
-		if(menu->items[i].group != current_group)
+
+		whitgl_int depth = -1;
+		whitgl_int j;
+		for(j=0; j<pointer->depth; j++)
+			if(menu->items[i].group == pointer->group[j])
+				depth = j;
+		if(depth == -1)
 			continue;
-		if(menu->items[i].type != TYPE_TITLE)
-			p.x += sprite.size.x*2;
-		if(num_active_items == pointer->highlighted)
+
+		p.x += sprite.size.x*2*depth;
+
+		if(i == pointer->highlighted)
 		{
 			whitgl_iaabb left_box = {{p.x-2-8, p.y-1}, {p.x-2, p.y+sprite.size.y}};
 			whitgl_sys_draw_iaabb(left_box, highlight_color);
@@ -153,6 +174,5 @@ void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whi
 			whitgl_sys_draw_iaabb(slider_box, ui_color);
 		}
 		draw_pos.y += sprite.size.y;
-		num_active_items++;
 	}
 }

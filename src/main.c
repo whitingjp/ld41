@@ -208,7 +208,7 @@ int main()
 		{
 			whitgl_input_update();
 			time = whitgl_fwrap(time+1/480.0, 0, 1);
-			if(whitgl_input_pressed(WHITGL_INPUT_X))
+			if(whitgl_input_pressed(WHITGL_INPUT_SELECT))
 			{
 				gif_start(&gif, setup.size, colors, num_colors*2);
 				frames_remaining = 128;
@@ -221,14 +221,13 @@ int main()
 			// 	island_target = ld41_island_random(&seed);
 			// 	island_lerp = 0;
 			// }
-			if(whitgl_input_pressed(WHITGL_INPUT_B))
+			if(whitgl_input_pressed(WHITGL_INPUT_Y))
 			{
-				// seed = whitgl_random_seed_init(whitgl_sys_get_time()*10000);
 				island_prev = island;
 				island_target = ld41_island_random(&seed);
 				island_lerp = 0;
 			}
-			if(whitgl_input_pressed(WHITGL_INPUT_A))
+			if(whitgl_input_pressed(WHITGL_INPUT_START) || whitgl_input_pressed(WHITGL_INPUT_X))
 				ui_up = !ui_up;
 
 			if(ui_up)
