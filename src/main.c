@@ -12,6 +12,7 @@
 #include <whitgl/sys.h>
 #include <whitgl/timer.h>
 
+#include <island.h>
 #include <gif.h>
 
 const char* model_src = "\
@@ -22,11 +23,12 @@ in vec3 fragmentColor;\
 in vec3 fragmentNormal;\
 out vec4 outColor;\
 uniform sampler2D palette;\
+uniform float num_colors;\
 void main()\
 {\
 	if(fragmentPosition.y < 0.0)\
 		discard;\
-	float band = (floor(fragmentPosition.y*8.0)+2)/8.0;\
+	float band = (floor(fragmentPosition.y*num_colors*1.2)+2)/num_colors;\
 	vec4 col = texture( palette, vec2(band, 0.5) );\
 	outColor = vec4(col);\
 }\
@@ -105,9 +107,11 @@ int main()
 
 	whitgl_shader model_shader = whitgl_shader_zero;
 	model_shader.fragment_src = model_src;
-	model_shader.num_uniforms = 1;
+	model_shader.num_uniforms = 2;
 	model_shader.uniforms[0].name = "palette";
 	model_shader.uniforms[0].type = WHITGL_UNIFORM_IMAGE;
+	model_shader.uniforms[1].name = "num_colors";
+	model_shader.uniforms[1].type = WHITGL_UNIFORM_FLOAT;
 	if(!whitgl_change_shader( WHITGL_SHADER_MODEL, model_shader))
 		return false;
 
@@ -124,28 +128,24 @@ int main()
 	load_model(0, "data/model/land.wmd");
 
 
-	whitgl_sys_color src = {0x4a,0x42,0x82,0xff};
-	whitgl_sys_color dest = {0xff,0xff,0xff,0xff};
-	whitgl_sys_color ctrl = {0xb8,0xe3,0x92,0xff};
+	ld41_island island = ld41_island_zero;
 
-	whitgl_sys_color colors[8];
-	whitgl_int i;
-	for(i=0; i<8; i++)
-	{
-		whitgl_float factor = i/8.0;
-		whitgl_sys_color a = whitgl_sys_color_blend(src, ctrl, factor);
-		whitgl_sys_color b = whitgl_sys_color_blend(ctrl, dest, factor);
-		whitgl_sys_color col = whitgl_sys_color_blend(a, b, factor);
-		colors[i] = col;
-	}
+	static whitgl_int num_colors = 8;
 
-	whitgl_ivec size = {8,1};
+	whitgl_set_shader_float(WHITGL_SHADER_MODEL, 1, num_colors);
+
+	whitgl_sys_color colors[num_colors];
+	whitgl_sys_color magic_pink = {0xff,0x00,0xff,0x00};
+	colors[0] = magic_pink;
+	ld41_color_ramp_palette(&island.color_ramp, &colors[1], num_colors-1);
+
+	whitgl_ivec size = {num_colors,1};
 	whitgl_sys_add_image_from_data(0, size, (unsigned char*)colors);
 
 	whitgl_sys_set_clear_color(colors[1]);
 
 	gif_accumulator gif;
-	gif_start(&gif, setup.size, colors, 8);
+	gif_start(&gif, setup.size, colors, num_colors);
 
 
 	whitgl_int frame = 0;
@@ -171,13 +171,14 @@ int main()
 		whitgl_float fov = whitgl_tau*0.2;
 		whitgl_fmat perspective = whitgl_fmat_perspective(fov, (float)setup.size.x/(float)setup.size.y, 0.1f, 20.0f);
 		whitgl_fvec3 up = {0,1,0};
+
+		whitgl_fmat rotate = whitgl_fmat_rot_y(frame*(whitgl_tau/128.0));
 		whitgl_fvec3 camera_pos = {0,0.25,-1.3};
+		camera_pos = whitgl_fvec3_apply_fmat(camera_pos, rotate);
 		whitgl_fvec3 camera_to = {0,0,0};
 		whitgl_fmat view = whitgl_fmat_lookAt(camera_pos, camera_to, up);
 
-		whitgl_fmat model_matrix = whitgl_fmat_rot_y(frame*(whitgl_tau/128.0));
-
-		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, model_matrix, view, perspective);
+		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, whitgl_fmat_identity, view, perspective);
 
 		whitgl_sys_draw_finish();
 
