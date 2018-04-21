@@ -34,6 +34,23 @@ void _ld41_menu_add_slider(ld41_menu* menu, ld41_menu_group group, const char* n
 void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 {
 	menu->num_items = 0;
+	_ld41_menu_add_title(menu, GROUP_ROOT, "bump 1");
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "angle", &island->blobs[0].angle, 0, whitgl_tau);
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "dist", &island->blobs[0].dist, -1, 1);
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "height", &island->blobs[0].height, 0, 1);
+	_ld41_menu_add_title(menu, GROUP_ROOT, "bump 2");
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "angle", &island->blobs[1].angle, 0, whitgl_tau);
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "dist", &island->blobs[1].dist, -1, 1);
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "height", &island->blobs[1].height, 0, 1);
+	_ld41_menu_add_title(menu, GROUP_ROOT, "bump 3");
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "angle", &island->blobs[2].angle, 0, whitgl_tau);
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "dist", &island->blobs[2].dist, -1, 1);
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "height", &island->blobs[2].height, 0, 1);
+	_ld41_menu_add_title(menu, GROUP_ROOT, "bump 4");
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "angle", &island->blobs[3].angle, 0, whitgl_tau);
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "dist", &island->blobs[3].dist, -1, 1);
+	_ld41_menu_add_slider(menu, GROUP_ROOT, "height", &island->blobs[3].height, 0, 1);
+
 	_ld41_menu_add_title(menu, GROUP_COLORS, "bottom");
 	_ld41_menu_add_slider(menu, GROUP_COLORS, "red", &island->color_ramp.src.r, 0, 1);
 	_ld41_menu_add_slider(menu, GROUP_COLORS, "green", &island->color_ramp.src.g, 0, 1);
@@ -46,10 +63,10 @@ void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 	_ld41_menu_add_slider(menu, GROUP_COLORS, "red", &island->color_ramp.dest.r, 0, 1);
 	_ld41_menu_add_slider(menu, GROUP_COLORS, "green", &island->color_ramp.dest.g, 0, 1);
 	_ld41_menu_add_slider(menu, GROUP_COLORS, "blue", &island->color_ramp.dest.b, 0, 1);
-	_ld41_menu_add_title(menu, GROUP_ROOT, "sky");
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "red", &island->sky_ramp.dest.r, 0, 1);
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "green", &island->sky_ramp.dest.g, 0, 1);
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "blue", &island->sky_ramp.dest.b, 0, 1);
+	_ld41_menu_add_title(menu, GROUP_COLORS, "sky");
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "red", &island->sky_ramp.dest.r, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "green", &island->sky_ramp.dest.g, 0, 1);
+	_ld41_menu_add_slider(menu, GROUP_COLORS, "blue", &island->sky_ramp.dest.b, 0, 1);
 }
 void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer)
 {
@@ -66,7 +83,8 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer)
 		if(menu->items[i].type == TYPE_SLIDER)
 		{
 			whitgl_fvec joystick = whitgl_input_joystick();
-			*menu->items[i].slider.value = whitgl_fclamp(*menu->items[i].slider.value+joystick.x*0.02, 0, 1);
+			whitgl_float dist = menu->items[i].slider.max-menu->items[i].slider.min;
+			*menu->items[i].slider.value = whitgl_fclamp(*menu->items[i].slider.value+joystick.x*dist*0.02, menu->items[i].slider.min,  menu->items[i].slider.max);
 		}
 	}
 	num_active_items++;
@@ -129,7 +147,9 @@ void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whi
 			whitgl_iaabb slider_box = {{p.x+sprite.size.x*8, p.y}, {p.x+sprite.size.x*16+1+8, p.y+sprite.size.y-1}};
 			whitgl_sys_draw_hollow_iaabb(slider_box, 1, ui_color);
 			whitgl_int total_width = slider_box.b.x-slider_box.a.x-2;
-			slider_box.b.x = slider_box.a.x+1+total_width*(*menu->items[i].slider.value);
+			whitgl_float dist = menu->items[i].slider.max-menu->items[i].slider.min;
+			whitgl_float display_value = ((*menu->items[i].slider.value)-menu->items[i].slider.min)/dist;
+			slider_box.b.x = slider_box.a.x+1+total_width*display_value;
 			whitgl_sys_draw_iaabb(slider_box, ui_color);
 		}
 		draw_pos.y += sprite.size.y;

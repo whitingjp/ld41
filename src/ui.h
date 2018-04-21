@@ -34,7 +34,7 @@ typedef struct
 	ld41_menu_group submenu;
 } ld41_menu_item;
 
-#define MAX_ITEMS (16)
+#define MAX_ITEMS (32)
 typedef struct
 {
 	ld41_menu_item items[MAX_ITEMS];

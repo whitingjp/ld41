@@ -177,12 +177,13 @@ int main()
 	whitgl_float island_lerp = 0.9;
 
 	whitgl_sys_color colors[num_colors*2];
+	colors[num_colors] = whitgl_sys_color_white;
 	whitgl_ivec color_image_size = {num_colors,2};
 	whitgl_sys_add_image_from_data(0, color_image_size, (unsigned char*)colors);
 
 	whitgl_sys_add_image(1, "data/image/font.png");
 
-	whitgl_sys_set_clear_color(colors[1]);
+	whitgl_sys_set_clear_color(colors[2]);
 
 	whitgl_int frames_remaining = 0;
 	whitgl_sys_color* capture_data = malloc(sizeof(whitgl_sys_color)*setup.size.x*setup.size.y);
@@ -256,8 +257,9 @@ int main()
 				if(island_lerp > 1)
 					island_lerp = 1;
 				island = ld41_island_lerp(&island_prev, &island_target, island_lerp);
-				ld41_island_update_model(&island);
 			}
+			ld41_island_update_model(&island);
+
 			ld41_color_ramp_palette(&island.color_ramp, &colors[1], num_colors-1);
 			ld41_color_ramp_palette(&island.sky_ramp, &colors[1+num_colors], num_colors-1);
 			whitgl_sys_update_image_from_data(0, color_image_size, (unsigned char*)colors);

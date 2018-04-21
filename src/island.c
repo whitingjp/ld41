@@ -129,8 +129,8 @@ float _ld41_blob_height(const ld41_height_blob* blob, whitgl_fvec p)
 {
 	whitgl_fvec offset = whitgl_fvec_scale_val(whitgl_angle_to_fvec(blob->angle), blob->dist);
 	whitgl_float mag = whitgl_fvec_magnitude(whitgl_fvec_sub(p, offset));
-	whitgl_float factor = whitgl_fclamp(whitgl_fpow(1-mag,2), 0, 1);
-	return factor*blob->height;
+	whitgl_float factor = whitgl_fclamp(whitgl_fpow(whitgl_fclamp(1-mag,0,1),2), 0, 1);
+	return whitgl_fclamp(factor*blob->height, 0, 1);
 }
 
 float _ld41_island_height_at_point(const ld41_island* island, whitgl_fvec p)
