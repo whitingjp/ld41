@@ -2,7 +2,7 @@ build
 .ninja*
 build.ninja
 *.pyc
-input
+whitgl/input
 art/gifsrc
 args.txt
 data/model/play
