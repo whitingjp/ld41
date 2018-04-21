@@ -148,15 +148,12 @@ void ld41_island_update_model(const ld41_island* island)
 	{
 		whitgl_fvec3 pos = {_model_data[i*9+0], 0, _model_data[i*9+2]};
 		whitgl_fvec top_down = {pos.x, pos.z};
-		_model_data[i*9+1] = _ld41_island_height_at_point(island, top_down);
-		// whitgl_float mag = whitgl_fvec_magnitude(top_down);
 
-		// whitgl_random_seed seed = whitgl_random_seed_init(top_down.x*1000+top_down.y*10000);
-		// whitgl_float random = whitgl_random_float(&seed);
 
-		// whitgl_fvec offset = {-0.2,-0.4};
-		// whitgl_float offset_mag = whitgl_fclamp(whitgl_fvec_magnitude(whitgl_fvec_add(top_down, offset)),0,1);
-		// _model_data[i*9+1] = (1-mag)*(0.5+((whitgl_fsin(pos.x*whitgl_tau*2)+1)/4))*0.8+random/32-whitgl_fpow(1-offset_mag,3);
+		whitgl_random_seed seed = whitgl_random_seed_init(top_down.x*1000+top_down.y*10000);
+		whitgl_float random = (whitgl_random_float(&seed)*2-1)*0;
+
+		_model_data[i*9+1] = _ld41_island_height_at_point(island, top_down)+random/8;
 	}
 
 	whitgl_sys_update_model_from_data(0, _model_num_vertices, (char*)_model_data);

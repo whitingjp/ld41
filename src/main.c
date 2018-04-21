@@ -156,6 +156,8 @@ int main()
 	whitgl_ivec color_image_size = {num_colors,2};
 	whitgl_sys_add_image_from_data(0, color_image_size, (unsigned char*)colors);
 
+	whitgl_sys_add_image(1, "data/image/font.png");
+
 	whitgl_sys_set_clear_color(colors[1]);
 
 	whitgl_int frames_remaining = 0;
@@ -218,6 +220,8 @@ int main()
 			whitgl_sys_capture_frame_to_data(capture_data, true);
 		whitgl_sys_draw_init(0);
 
+		whitgl_sys_enable_depth(true);
+
 		whitgl_float fov = whitgl_tau*0.2;
 		whitgl_fmat perspective = whitgl_fmat_perspective(fov, (float)setup.size.x/(float)setup.size.y, 0.1f, 20.0f);
 		whitgl_fvec3 up = {0,1,0};
@@ -247,6 +251,12 @@ int main()
 		glFrontFace(GL_CCW);
 		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, whitgl_fmat_identity, view, perspective);
 		whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_0, whitgl_fmat_identity, view, perspective);
+
+		whitgl_sys_enable_depth(false);
+
+		whitgl_sprite sprite = {1, {0,0}, {6,12}};
+		whitgl_ivec text_pos = {2,2};
+		whitgl_sys_draw_text(sprite, "character creation", text_pos);
 
 
 		whitgl_sys_draw_finish();
