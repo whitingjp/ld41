@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define GLEW_STATIC
+#include <GL/glew.h>
+
 #include <whitgl/input.h>
 #include <whitgl/logging.h>
 #include <whitgl/math.h>
@@ -31,6 +34,27 @@ void main()\
 	outColor = vec4(col);\
 }\
 ";
+
+const char* reflection_src = "\
+#version 150\
+\n\
+in vec3 fragmentPosition;\
+out vec4 outColor;\
+uniform sampler2D palette;\
+uniform float num_colors;\
+void main()\
+{\
+	if(fragmentPosition.y > 0.0)\
+		discard;\
+	if(mod(gl_FragCoord.y,2) < 1.5)\
+		discard;\
+	float band = (floor(-fragmentPosition.y*num_colors*1.2)+2)/num_colors;\
+	vec4 col = texture( palette, vec2(band, 0.25) );\
+	outColor = vec4(col);\
+}\
+";
+
+
 
 const char* skysphere_src = "\
 #version 150\
@@ -89,8 +113,25 @@ int main()
 	if(!whitgl_change_shader( WHITGL_SHADER_EXTRA_0, sky_shader))
 		return false;
 
+	whitgl_shader reflection_shader = whitgl_shader_zero;
+	reflection_shader.fragment_src = reflection_src;
+	reflection_shader.num_uniforms = 2;
+	reflection_shader.uniforms[0].name = "palette";
+	reflection_shader.uniforms[0].type = WHITGL_UNIFORM_IMAGE;
+	reflection_shader.uniforms[1].name = "num_colors";
+	reflection_shader.uniforms[1].type = WHITGL_UNIFORM_FLOAT;
+	if(!whitgl_change_shader( WHITGL_SHADER_EXTRA_1, reflection_shader))
+		return false;
+
+
+	static whitgl_int num_colors = 8;
 	whitgl_set_shader_image(WHITGL_SHADER_MODEL, 0, 0);
 	whitgl_set_shader_image(WHITGL_SHADER_EXTRA_0, 0, 0);
+	whitgl_set_shader_image(WHITGL_SHADER_EXTRA_1, 0, 0);
+
+	whitgl_set_shader_float(WHITGL_SHADER_MODEL, 1, num_colors);
+	whitgl_set_shader_float(WHITGL_SHADER_EXTRA_0, 1, num_colors);
+	whitgl_set_shader_float(WHITGL_SHADER_EXTRA_1, 1, num_colors);
 
 
 	WHITGL_LOG("Initiating sound");
@@ -110,11 +151,6 @@ int main()
 	ld41_island island_prev = island;
 	ld41_island island_target = island;
 	whitgl_float island_lerp = 1;
-
-	static whitgl_int num_colors = 8;
-
-	whitgl_set_shader_float(WHITGL_SHADER_MODEL, 1, num_colors);
-	whitgl_set_shader_float(WHITGL_SHADER_EXTRA_0, 1, num_colors);
 
 	whitgl_sys_color colors[num_colors*2];
 	whitgl_ivec color_image_size = {num_colors,2};
@@ -195,6 +231,20 @@ int main()
 		whitgl_fvec3 camera_to = {0,0,0};
 		whitgl_fmat view = whitgl_fmat_lookAt(camera_pos, camera_to, up);
 
+
+		glFrontFace(GL_CW);
+		static const whitgl_fmat whitgl_fmat_flipy =
+		{
+		{
+			1,0,0,0,
+			0,-1,0,0,
+			0,0,1,0,
+			0,0,0,1
+		}
+		};
+		whitgl_sys_draw_model(0, WHITGL_SHADER_EXTRA_1, whitgl_fmat_flipy, view, perspective);
+
+		glFrontFace(GL_CCW);
 		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, whitgl_fmat_identity, view, perspective);
 		whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_0, whitgl_fmat_identity, view, perspective);
 
