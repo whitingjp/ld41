@@ -109,7 +109,7 @@ int main()
 		while(whitgl_timer_should_do_frame(60))
 		{
 			whitgl_input_update();
-			time = whitgl_fwrap(time+1/480.0, 0, 1);
+			// time = whitgl_fwrap(time+1/480.0, 0, 1);
 			if(whitgl_input_pressed(WHITGL_INPUT_B))
 			{
 				gif_start(&gif, setup.size, colors, num_colors);
@@ -124,7 +124,7 @@ int main()
 			}
 			if(island_lerp < 1)
 			{
-				island_lerp = island_lerp+1/10.0;
+				island_lerp = island_lerp+1/60.0;
 				if(island_lerp > 1)
 					island_lerp = 1;
 				island = ld41_island_lerp(&island_prev, &island_target, island_lerp);

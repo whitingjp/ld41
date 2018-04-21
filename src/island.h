@@ -15,11 +15,21 @@ void ld41_color_ramp_palette(const ld41_color_ramp* ramp, whitgl_sys_color* colo
 
 typedef struct
 {
+	whitgl_float angle;
+	whitgl_float dist;
+	whitgl_float height;
+} ld41_height_blob;
+
+#define NUM_BLOBS (4)
+typedef struct
+{
 	ld41_color_ramp color_ramp;
+	ld41_height_blob blobs[NUM_BLOBS];
 } ld41_island;
 static const ld41_island ld41_island_zero =
 {
-	{{0x4a,0x42,0x82,0xff},{0xff,0xff,0xff,0xff},{0xb8,0xe3,0x92,0xff}},
+	{{0x32,0x5a,0x1a,0xff},{0xea,0x65,0x41,0xff},{0xb8,0xe3,0x92,0xff}},
+	{{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
 };
 
 bool ld41_island_init();
