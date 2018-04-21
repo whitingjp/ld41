@@ -32,6 +32,8 @@ int main()
 	WHITGL_LOG("Initiating timer");
 	whitgl_timer_init();
 
+	whitgl_load_model(0, "data/model/land.wmd");
+
 	bool running = true;
 	while(running)
 	{
@@ -46,6 +48,19 @@ int main()
 				running = false;
 		}
 		whitgl_sys_draw_init(0);
+
+		whitgl_float fov = whitgl_tau/4;
+		whitgl_fmat perspective = whitgl_fmat_perspective(fov, (float)setup.size.x/(float)setup.size.y, 0.1f, 20.0f);
+		whitgl_fvec3 up = {0,1,0};
+		whitgl_fvec3 camera_pos = {0,3,-10};
+		whitgl_fvec3 camera_to = {0,0,0};
+		whitgl_fmat view = whitgl_fmat_lookAt(camera_pos, camera_to, up);
+
+		// whitgl_fmat model_matrix = whitgl_fmat_rot_y(time);
+		// model_matrix = whitgl_fmat_multiply(model_matrix, whitgl_fmat_rot_z(time*3));
+
+		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, whitgl_fmat_identity, view, perspective);
+
 		whitgl_sys_draw_finish();
 	}
 
