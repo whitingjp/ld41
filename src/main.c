@@ -22,7 +22,7 @@ in vec3 fragmentNormal;\
 out vec4 outColor;\
 void main()\
 {\
-	float band = floor(fragmentPosition.y+0.5)/8.0+2/8.0;\
+	float band = (floor(fragmentPosition.y*8.0)+2)/8.0;\
 	vec3 col = vec3(band);\
 	outColor = vec4(col,1.0);\
 }\
@@ -64,12 +64,12 @@ whitgl_bool load_model(whitgl_int id, const char* filename)
 	{
 		whitgl_fvec3 pos = {data[i*9+0], data[i*9+1], data[i*9+2]};
 		whitgl_fvec top_down = {pos.x, pos.z};
-		whitgl_float mag = whitgl_fvec_magnitude(top_down)/8.0;
+		whitgl_float mag = whitgl_fvec_magnitude(top_down);
 
 
 		whitgl_random_seed seed = whitgl_random_seed_init(top_down.x*1000+top_down.y*10000);
 		whitgl_float random = whitgl_random_float(&seed);
-		data[i*9+1] = (1-mag)*(0.3+((whitgl_fsin(pos.x*whitgl_tau/4)+1)/4))*6+random/4;
+		data[i*9+1] = (1-mag)*(0.3+((whitgl_fsin(pos.x*whitgl_tau*2)+1)/4))*0.8+random/32;
 	}
 
 	whitgl_sys_update_model_from_data(id, num_vertices, (char*)data);
@@ -149,7 +149,7 @@ int main()
 		whitgl_float fov = whitgl_tau*0.2;
 		whitgl_fmat perspective = whitgl_fmat_perspective(fov, (float)setup.size.x/(float)setup.size.y, 0.1f, 20.0f);
 		whitgl_fvec3 up = {0,1,0};
-		whitgl_fvec3 camera_pos = {0,2,-10};
+		whitgl_fvec3 camera_pos = {0,0.25,-1.3};
 		whitgl_fvec3 camera_to = {0,0,0};
 		whitgl_fmat view = whitgl_fmat_lookAt(camera_pos, camera_to, up);
 
