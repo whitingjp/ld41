@@ -54,9 +54,9 @@ int main()
 	WHITGL_LOG("Starting main.");
 
 	whitgl_sys_setup setup = whitgl_sys_setup_zero;
-	setup.size.x = 440*2;
-	setup.size.y = 220*2;
-	setup.pixel_size = 1;
+	setup.size.x = 440*1;
+	setup.size.y = 220*1;
+	setup.pixel_size = 2;
 	setup.start_focused = false;
 	setup.name = "game";
 
@@ -142,8 +142,8 @@ int main()
 			time = whitgl_fwrap(time+1/480.0, 0, 1);
 			if(whitgl_input_pressed(WHITGL_INPUT_B))
 			{
-				gif_start(&gif, setup.size, colors, num_colors);
-				frames_remaining = 256;
+				gif_start(&gif, setup.size, colors, num_colors*2);
+				frames_remaining = 128;
 			}
 			// if(frames_remaining % 32 == 0)
 			// {
@@ -188,7 +188,7 @@ int main()
 
 		whitgl_float render_time = time;
 		if(frames_remaining > 0)
-			render_time = (256.0-frames_remaining)/256.0;
+			render_time = (128.0-frames_remaining)/128.0;
 		whitgl_fmat rotate = whitgl_fmat_rot_y(render_time*whitgl_tau);
 		whitgl_fvec3 camera_pos = {0,0.25,-1.3};
 		camera_pos = whitgl_fvec3_apply_fmat(camera_pos, rotate);
