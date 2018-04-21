@@ -11,6 +11,7 @@
 #include <whitgl/sys.h>
 #include <whitgl/timer.h>
 
+#include <gif.h>
 
 const char* model_src = "\
 #version 150\
@@ -21,7 +22,7 @@ in vec3 fragmentNormal;\
 out vec4 outColor;\
 void main()\
 {\
-	float band = floor(fragmentPosition.y)/8.0+0.2;\
+	float band = floor(fragmentPosition.y+0.5)/8.0+2/8.0;\
 	vec3 col = vec3(band);\
 	outColor = vec4(col,1.0);\
 }\
@@ -63,12 +64,12 @@ whitgl_bool load_model(whitgl_int id, const char* filename)
 	{
 		whitgl_fvec3 pos = {data[i*9+0], data[i*9+1], data[i*9+2]};
 		whitgl_fvec top_down = {pos.x, pos.z};
-		whitgl_float mag = whitgl_fvec_magnitude(top_down);
+		whitgl_float mag = whitgl_fvec_magnitude(top_down)/8.0;
 
 
 		whitgl_random_seed seed = whitgl_random_seed_init(top_down.x*1000+top_down.y*10000);
 		whitgl_float random = whitgl_random_float(&seed);
-		data[i*9+1] = (8-mag)/2.0+random/4;
+		data[i*9+1] = (1-mag)*(0.3+((whitgl_fsin(pos.x*whitgl_tau/4)+1)/4))*6+random/4;
 	}
 
 	whitgl_sys_update_model_from_data(id, num_vertices, (char*)data);
@@ -108,7 +109,25 @@ int main()
 
 	load_model(0, "data/model/land.wmd");
 
-	whitgl_float time = 0;
+
+
+	whitgl_sys_color colors[8];
+	whitgl_int i;
+	for(i=0; i<8; i++)
+	{
+		whitgl_float factor = i/8.0;
+		whitgl_sys_color col = {factor*0xff,factor*0xff,factor*0xff,0xff};
+		colors[i] = col;
+	}
+
+	whitgl_sys_set_clear_color(colors[1]);
+
+	gif_accumulator gif;
+	gif_start(&gif, setup.size, colors, 8);
+
+
+	whitgl_int frame = 0;
+	whitgl_sys_color* capture_data = malloc(sizeof(whitgl_sys_color)*setup.size.x*setup.size.y);
 
 	bool running = true;
 	while(running)
@@ -118,12 +137,13 @@ int main()
 		while(whitgl_timer_should_do_frame(60))
 		{
 			whitgl_input_update();
-			time += 0.01;
 			if(whitgl_input_pressed(WHITGL_INPUT_ESC))
 				running = false;
 			if(whitgl_sys_should_close())
 				running = false;
 		}
+		if(frame < 128)
+			whitgl_sys_capture_frame_to_data(capture_data, true);
 		whitgl_sys_draw_init(0);
 
 		whitgl_float fov = whitgl_tau*0.2;
@@ -133,12 +153,22 @@ int main()
 		whitgl_fvec3 camera_to = {0,0,0};
 		whitgl_fmat view = whitgl_fmat_lookAt(camera_pos, camera_to, up);
 
-		whitgl_fmat model_matrix = whitgl_fmat_rot_y(time);
+		whitgl_fmat model_matrix = whitgl_fmat_rot_y(frame*(whitgl_tau/128.0));
 
 		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, model_matrix, view, perspective);
 
 		whitgl_sys_draw_finish();
+
+		if(frame < 128)
+		{
+			gif_add_frame(&gif, capture_data, 4);
+		}
+		frame++;
+		if(frame == 128)
+			gif_finalize(&gif);
 	}
+
+	free(capture_data);
 
 	WHITGL_LOG("Shutting down input");
 	whitgl_input_shutdown();
