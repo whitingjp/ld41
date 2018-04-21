@@ -17,6 +17,7 @@
 
 #include <island.h>
 #include <gif.h>
+#include <ui.h>
 
 const char* model_src = "\
 #version 150\
@@ -165,7 +166,9 @@ int main()
 	whitgl_sys_color* capture_data = malloc(sizeof(whitgl_sys_color)*setup.size.x*setup.size.y);
 	gif_accumulator gif;
 
-
+	ld41_menu* menu = malloc(sizeof(ld41_menu_zero));
+	ld41_menu_zero(menu);
+	ld41_menu_pointer menu_pointer = ld41_menu_pointer_zero;
 
 	whitgl_bool ui_up = false;
 	whitgl_float ui_lerp = 0;
@@ -209,6 +212,9 @@ int main()
 				ui_lerp = whitgl_fclamp(ui_lerp+0.05, 0, 1);
 			else
 				ui_lerp = whitgl_fclamp(ui_lerp-0.05, 0, 1);
+
+			if(ui_up)
+				ld41_menu_update(menu, &menu_pointer);
 
 			const whitgl_fvec3 regular_camera_to = {0,0,0};
 			const whitgl_fvec3 regular_camera_pos = {0,0.25,-1.3};
@@ -275,10 +281,9 @@ int main()
 
 		whitgl_sys_enable_depth(false);
 
-		float ui_offset = -whitgl_fsmoothstep(1-ui_lerp,0,1)*setup.size.x;
-		whitgl_sprite sprite = {1, {0,0}, {6,12}};
-		whitgl_ivec text_pos = {2+ui_offset,2};
-		whitgl_sys_draw_text(sprite, "character creation", text_pos);
+		whitgl_ivec ui_offset = {2-whitgl_fsmoothstep(1-ui_lerp,0,1)*setup.size.x, 2};
+
+		ld41_menu_draw(menu, &menu_pointer, ui_offset);
 
 
 		whitgl_sys_draw_finish();
@@ -305,6 +310,8 @@ int main()
 	}
 
 	free(capture_data);
+
+	free(menu);
 
 	ld41_island_shutdown();
 
