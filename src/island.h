@@ -26,6 +26,7 @@ typedef enum
 	TYPE_PLATEAU,
 	TYPE_SPIKE,
 	TYPE_NOISE,
+	TYPE_DIP,
 	TYPE_MAX,
 } ld41_blob_type;
 
@@ -36,6 +37,7 @@ typedef struct
 	whitgl_float angle;
 	whitgl_float dist;
 	whitgl_float height;
+	whitgl_float size;
 } ld41_height_blob;
 
 #define NUM_BLOBS (4)
@@ -52,7 +54,7 @@ static const ld41_island ld41_island_zero =
 {
 	{{0,0,0},{0,0,0},{0,0,0}},
 	{{0,0,0},{0,0,0},{0,0,0}},
-	{{TYPE_MOUND,0,0,0},{TYPE_MOUND,0,0,0},{TYPE_MOUND,0,0,0},{TYPE_MOUND,0,0,0}},
+	{{TYPE_MOUND,0,0,0,0},{TYPE_MOUND,0,0,0,0},{TYPE_MOUND,0,0,0,0},{TYPE_MOUND,0,0,0,0}},
 	false,
 	false,
 	false,

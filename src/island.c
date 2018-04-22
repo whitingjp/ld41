@@ -103,6 +103,7 @@ ld41_island ld41_island_random(whitgl_random_seed* seed)
 		island.blobs[i].angle = whitgl_random_float(seed)*whitgl_tau;
 		island.blobs[i].dist = whitgl_random_float(seed)*1.8-0.9;
 		island.blobs[i].height = whitgl_random_float(seed)*MAX_BUMP_HEIGHT;
+		island.blobs[i].size = whitgl_random_float(seed);
 	}
 
 	return island;
@@ -125,6 +126,7 @@ ld41_island ld41_island_lerp(const ld41_island* src, const ld41_island* dest, wh
 		island.blobs[i].angle = whitgl_angle_lerp(src->blobs[i].angle, dest->blobs[i].angle, t);
 		island.blobs[i].dist = whitgl_finterpolate(src->blobs[i].dist, dest->blobs[i].dist, t);
 		island.blobs[i].height = whitgl_finterpolate(src->blobs[i].height, dest->blobs[i].height, t);
+		island.blobs[i].size = whitgl_finterpolate(src->blobs[i].size, dest->blobs[i].size, t);
 	}
 
 	return island;
@@ -135,6 +137,7 @@ float _ld41_blob_height(const ld41_height_blob* blob, whitgl_fvec p)
 	whitgl_fvec offset = whitgl_fvec_scale_val(whitgl_angle_to_fvec(blob->angle), blob->dist);
 	whitgl_fvec diff = whitgl_fvec_sub(p, offset);
 	whitgl_float mag = whitgl_fvec_magnitude(diff);
+	mag *= 0.1+blob->size*1.5;
 
 	whitgl_float factor = 0;
 	switch(blob->type)
@@ -155,11 +158,17 @@ float _ld41_blob_height(const ld41_height_blob* blob, whitgl_fvec p)
 			factor = (whitgl_random_float(&seed)*2-1)*0.5*(1-mag);
 			break;
 		}
+		case TYPE_DIP:
+			factor = whitgl_fclamp(1-mag*1.5,0,1);
+			factor = -(factor*factor);
 		default:
 			break;
 	}
-	factor =  whitgl_fclamp(factor, -1, 1);
-	return whitgl_fclamp(factor*blob->height, 0, 1);
+	if(blob->type != TYPE_DIP)
+		factor = whitgl_fclamp(factor, 0, 1);
+	else
+		factor = whitgl_fclamp(factor, -1, 0);
+	return factor*blob->height;
 }
 
 float _ld41_island_height_at_point(const ld41_island* island, whitgl_fvec p)
