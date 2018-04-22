@@ -297,7 +297,6 @@ int main()
 		whitgl_fvec3 spun_camera_to = whitgl_fvec3_apply_fmat(camera_to, rotate);
 		whitgl_fmat view = whitgl_fmat_lookAt(spun_camera_pos, spun_camera_to, up);
 
-
 		glFrontFace(GL_CW);
 		static const whitgl_fmat whitgl_fmat_flipy =
 		{
