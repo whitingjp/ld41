@@ -49,7 +49,7 @@ typedef struct
 	whitgl_float size;
 } ld41_height_blob;
 
-#define NUM_BLOBS (4)
+#define NUM_BLOBS (5)
 typedef struct
 {
 	ld41_color_ramp color_ramp;
