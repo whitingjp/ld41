@@ -35,12 +35,13 @@ in vec3 fragmentPosition;\
 out vec4 outColor;\
 uniform sampler2D palette;\
 uniform float num_colors;\
+uniform vec2 color_offset;\
 void main()\
 {\
 	if(fragmentPosition.y < 0.0)\
 		discard;\
 	float band = (floor(fragmentPosition.y*num_colors*1.2)+2)/num_colors;\
-	vec4 col = texture( palette, vec2(band, 0.25) );\
+	vec4 col = texture( palette, vec2(band, 0.25)+color_offset );\
 	outColor = vec4(col);\
 }\
 ";
@@ -53,6 +54,7 @@ out vec4 outColor;\
 uniform sampler2D palette;\
 uniform float num_colors;\
 uniform sampler2D dither;\
+uniform vec2 color_offset;\
 void main()\
 {\
 	if(fragmentPosition.y > 0.0)\
@@ -62,7 +64,7 @@ void main()\
 	if(dcol.r > test)\
 		discard;\
 	float band = (floor(-fragmentPosition.y*num_colors*1.2)+2)/num_colors;\
-	vec4 col = texture( palette, vec2(band, 0.25) );\
+	vec4 col = texture( palette, vec2(band, 0.25)+color_offset );\
 	outColor = vec4(col);\
 }\
 ";
@@ -87,10 +89,13 @@ void main()\
 const char* flat_src = "\
 #version 150\
 \n\
+in vec3 fragmentPosition;\
 uniform vec4 color;\
 out vec4 outColor;\
 void main()\
 {\
+	if(fragmentPosition.y < 0.0)\
+		discard;\
 	if(color.a < 0.6 && mod(gl_FragCoord.y,2) < 1.5)\
 		discard;\
 	outColor = vec4(color.rgb,1);\
@@ -136,11 +141,13 @@ int main()
 
 	whitgl_shader model_shader = whitgl_shader_zero;
 	model_shader.fragment_src = model_src;
-	model_shader.num_uniforms = 2;
+	model_shader.num_uniforms = 3;
 	model_shader.uniforms[0].name = "palette";
 	model_shader.uniforms[0].type = WHITGL_UNIFORM_IMAGE;
 	model_shader.uniforms[1].name = "num_colors";
 	model_shader.uniforms[1].type = WHITGL_UNIFORM_FLOAT;
+	model_shader.uniforms[2].name = "color_offset";
+	model_shader.uniforms[2].type = WHITGL_UNIFORM_FVEC;
 	if(!whitgl_change_shader( WHITGL_SHADER_MODEL, model_shader))
 		return false;
 
@@ -156,13 +163,15 @@ int main()
 
 	whitgl_shader reflection_shader = whitgl_shader_zero;
 	reflection_shader.fragment_src = reflection_src;
-	reflection_shader.num_uniforms = 3;
+	reflection_shader.num_uniforms = 4;
 	reflection_shader.uniforms[0].name = "palette";
 	reflection_shader.uniforms[0].type = WHITGL_UNIFORM_IMAGE;
 	reflection_shader.uniforms[1].name = "num_colors";
 	reflection_shader.uniforms[1].type = WHITGL_UNIFORM_FLOAT;
-	reflection_shader.uniforms[2].name = "dither";
-	reflection_shader.uniforms[2].type = WHITGL_UNIFORM_IMAGE;
+	reflection_shader.uniforms[2].name = "color_offset";
+	reflection_shader.uniforms[2].type = WHITGL_UNIFORM_FVEC;
+	reflection_shader.uniforms[3].name = "dither";
+	reflection_shader.uniforms[3].type = WHITGL_UNIFORM_IMAGE;
 	if(!whitgl_change_shader( WHITGL_SHADER_EXTRA_1, reflection_shader))
 		return false;
 
@@ -171,7 +180,7 @@ int main()
 	whitgl_set_shader_image(WHITGL_SHADER_MODEL, 0, 0);
 	whitgl_set_shader_image(WHITGL_SHADER_EXTRA_0, 0, 0);
 	whitgl_set_shader_image(WHITGL_SHADER_EXTRA_1, 0, 0);
-	whitgl_set_shader_image(WHITGL_SHADER_EXTRA_1, 2, 2);
+	whitgl_set_shader_image(WHITGL_SHADER_EXTRA_1, 3, 2);
 
 	whitgl_set_shader_float(WHITGL_SHADER_MODEL, 1, num_colors);
 	whitgl_set_shader_float(WHITGL_SHADER_EXTRA_0, 1, num_colors);
@@ -351,10 +360,25 @@ int main()
 		}
 		};
 		whitgl_sys_draw_model(0, WHITGL_SHADER_EXTRA_1, whitgl_fmat_flipy, view, perspective);
-
 		glFrontFace(GL_CCW);
+		whitgl_fvec moon_color_offset = {0.0, 0.5};
+		whitgl_fvec3 moon_pos = {4,0,0};
+		whitgl_fmat moon_translate = whitgl_fmat_translate(moon_pos);
+		whitgl_fmat moon_rotate = whitgl_fmat_rot_z(0.05*whitgl_tau);
+		whitgl_fmat moon_scale = whitgl_fmat_scale(whitgl_fvec3_val(0.05));
+		whitgl_fmat moon_model = whitgl_fmat_multiply(whitgl_fmat_multiply(moon_rotate, moon_translate), moon_scale);
+		whitgl_set_shader_fvec(WHITGL_SHADER_EXTRA_1, 2, moon_color_offset);
+		whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_1, whitgl_fmat_multiply(whitgl_fmat_flipy, moon_model), view, perspective);
+		whitgl_set_shader_fvec(WHITGL_SHADER_EXTRA_1, 2, whitgl_fvec_zero);
+
 		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, whitgl_fmat_identity, view, perspective);
 		whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_0, whitgl_fmat_identity, view, perspective);
+
+		glFrontFace(GL_CW);
+		whitgl_set_shader_fvec(WHITGL_SHADER_MODEL, 2, moon_color_offset);
+		whitgl_sys_draw_model(1, WHITGL_SHADER_MODEL, moon_model, view, perspective);
+		whitgl_set_shader_fvec(WHITGL_SHADER_MODEL, 2, whitgl_fvec_zero);
+		glFrontFace(GL_CCW);
 
 		whitgl_sys_draw_init(0);
 		whitgl_fmat ortho = whitgl_fmat_orthographic(0, setup.size.x, 0, setup.size.y, 0, 1.01);
