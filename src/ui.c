@@ -110,6 +110,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 	if(whitgl_input_pressed(WHITGL_INPUT_MOUSE_LEFT) && whitgl_iaabb_intersects(mouse_box, close_sprite_iaabb))
 		pointer->up = false;
 
+	whitgl_bool old_pointer_up = pointer->up;
 	if(whitgl_input_pressed(WHITGL_INPUT_START))
 		pointer->up = !pointer->up;
 	if(whitgl_input_pressed(WHITGL_INPUT_A) && !pointer->up)
@@ -118,6 +119,8 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
  		pointer->up = false;
 	if(pointer->up)
 		pointer->ever_opened = true;
+	if(old_pointer_up == false && pointer->up)
+		return;
 	if(pointer->up)
 		pointer->lerp = whitgl_fclamp(pointer->lerp+0.05, 0, 1);
 	else
