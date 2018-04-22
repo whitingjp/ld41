@@ -5,7 +5,6 @@ Submit
 Hopefully
 ---------
 Improve blobs
-Improve performance
 Investigate improving reflection
   Vertex shader? Wavey dither? Multi levelled dither?
 Fix compile warnings in windows

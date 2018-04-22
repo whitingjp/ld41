@@ -214,6 +214,7 @@ int main()
 	ld41_camera camera = ld41_camera_zero;
 
 	float progress_bar_lerp = 1;
+	whitgl_bool update_required = true;
 
 	bool running = true;
 	while(running)
@@ -262,7 +263,7 @@ int main()
 			}
 
 			if(game_mode == MODE_NORMAL)
-				ld41_menu_update(menu, &menu_pointer, setup.size);
+				update_required |= ld41_menu_update(menu, &menu_pointer, setup.size);
 			else
 				menu_pointer.lerp = whitgl_fclamp(menu_pointer.lerp-0.01, 0, 1);
 			island.sky_ramp.src = island.color_ramp.src;
@@ -276,8 +277,13 @@ int main()
 				if(island_lerp > 1)
 					island_lerp = 1;
 				island = ld41_island_lerp(&island_prev, &island_target, island_lerp);
+				update_required = true;
 			}
-			ld41_island_update_model(&island);
+			if(update_required)
+			{
+				ld41_island_update_model(&island);
+				update_required = false;
+			}
 
 			ld41_color_ramp_palette(&island.color_ramp, &colors[1], num_colors-1);
 			ld41_color_ramp_palette(&island.sky_ramp, &colors[1+num_colors], num_colors-1);

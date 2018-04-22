@@ -85,8 +85,10 @@ void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 
 	_ld41_menu_add_button(menu, GROUP_ROOT, "quit", &island->button_quit);
 }
-void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec setup_size)
+bool ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec setup_size)
 {
+	whitgl_bool update_required = false;
+
 	whitgl_float offset = whitgl_fsmoothstep(1-pointer->lerp,0,1)*setup_size.x*0.5;
 	whitgl_ivec draw_pos = {16+16+8-offset, 16+2+14};
 	whitgl_sprite sprite = {1, {0,0}, {6,12}};
@@ -122,7 +124,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 	if(pointer->up)
 		pointer->ever_opened = true;
 	if(old_pointer_up == false && pointer->up)
-		return;
+		return update_required;
 	if(pointer->up)
 		pointer->lerp = whitgl_fclamp(pointer->lerp+0.05, 0, 1);
 	else
@@ -130,7 +132,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 
 	pointer->idle_bounce = whitgl_fwrap(pointer->idle_bounce+1/240.0,0,1);
 	if(!pointer->up)
-		return;
+		return update_required;
 
 	if(mouse_moved && !pointer->mouse_interacting)
 	{
@@ -171,6 +173,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 		if(menu->items[i].type == TYPE_SLIDER)
 		{
 			whitgl_fvec joystick = whitgl_input_joystick();
+			whitgl_float old_value = *menu->items[i].slider.value;
 			whitgl_float dist = menu->items[i].slider.max-menu->items[i].slider.min;
 			whitgl_float speed = joystick.x*dist*0.015;
 			if(whitgl_input_held(WHITGL_INPUT_A))
@@ -189,6 +192,8 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 				*menu->items[i].slider.value = whitgl_fclamp(pos0to1*dest_width+menu->items[i].slider.min, menu->items[i].slider.min,  menu->items[i].slider.max);;
 				pointer->mouse_interacting = true;
 			}
+			if(old_value != *menu->items[i].slider.value)
+				update_required = true;
 		}
 		if(menu->items[i].type == TYPE_SUBMENU)
 		{
@@ -215,6 +220,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 			if(whitgl_input_pressed(WHITGL_INPUT_A) || whitgl_input_pressed(WHITGL_INPUT_MOUSE_LEFT))
 			{
 				*menu->items[i].button.value = true;
+				update_required = true;
 			}
 		}
 		draw_pos.y += 12;
@@ -248,6 +254,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 	}
 
 	pointer->last_mouse = mouse_pos;
+	return update_required;
 }
 void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec setup_size)
 {
