@@ -391,11 +391,11 @@ int main()
 		}
 
 #if defined _WIN32
-		if(whitgl_sys_window_focused())
-			Sleep(10);
+		if(!whitgl_sys_window_focused())
+			Sleep(50);
 #else
-		if(whitgl_sys_window_focused())
-			usleep(10*1000);
+		if(!whitgl_sys_window_focused())
+			usleep(50*1000);
 #endif
 	}
 
