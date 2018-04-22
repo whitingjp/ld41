@@ -76,6 +76,8 @@ void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 }
 void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec draw_pos)
 {
+	whitgl_sprite sprite = {1, {0,0}, {6,12}};
+
 	whitgl_ivec mouse_pos = whitgl_input_mouse_pos(2);
 	whitgl_ivec mouse_diff = whitgl_ivec_sub(mouse_pos, pointer->last_mouse);
 	whitgl_bool mouse_moved = !whitgl_ivec_eq(mouse_diff, whitgl_ivec_zero);
@@ -95,15 +97,17 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 
 		whitgl_ivec p = draw_pos;
 		p.x += 6*2*depth;
-		whitgl_iaabb select_box = {{p.x-2-8, p.y-1}, {p.x+6*16+1+8, p.y+12}};
-		whitgl_iaabb mouse_box = {mouse_pos, {mouse_pos.x+1, mouse_pos.y+1}};
-		draw_pos.y += 12;
+		whitgl_iaabb select_box = {{p.x-2-8, p.y-1}, {p.x+sprite.size.x*16+1+8, p.y+sprite.size.y}};
+		whitgl_iaabb mouse_box = {{mouse_pos.x-6,mouse_pos.y}, {mouse_pos.x+7, mouse_pos.y+1}};
 
 		if(whitgl_iaabb_intersects(mouse_box, select_box) && mouse_moved)
 			pointer->highlighted = i;
 
 		if(i != pointer->highlighted)
+		{
+			draw_pos.y += 12;
 			continue;
+		}
 
 		if(whitgl_input_pressed(WHITGL_INPUT_B) && pointer->depth > 1)
 		{
@@ -121,6 +125,15 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 				*menu->items[i].slider.value = whitgl_fwrap(*menu->items[i].slider.value+speed, menu->items[i].slider.min,  menu->items[i].slider.max);
 			else
 				*menu->items[i].slider.value = whitgl_fclamp(*menu->items[i].slider.value+speed, menu->items[i].slider.min,  menu->items[i].slider.max);
+
+			whitgl_iaabb slider_box = {{p.x+sprite.size.x*8, p.y}, {p.x+sprite.size.x*16+1+8, p.y+sprite.size.y-1}};
+			if(whitgl_iaabb_intersects(mouse_box, slider_box) && whitgl_input_pressed(WHITGL_INPUT_MOUSE_LEFT))
+			{
+				whitgl_float slider_box_width = slider_box.b.x-slider_box.a.x;
+				whitgl_float pos0to1 = (mouse_pos.x-slider_box.a.x)/slider_box_width;
+				whitgl_float dest_width = menu->items[i].slider.max-menu->items[i].slider.min;
+				*menu->items[i].slider.value = whitgl_fclamp(pos0to1*dest_width+menu->items[i].slider.min, menu->items[i].slider.min,  menu->items[i].slider.max);;
+			}
 		}
 		if(menu->items[i].type == TYPE_SUBMENU)
 		{
@@ -136,6 +149,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 				}
 			}
 		}
+		draw_pos.y += 12;
 	}
 
 	if(whitgl_input_pressed(WHITGL_INPUT_DOWN))
