@@ -81,8 +81,6 @@ void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 	_ld41_menu_add_slider(menu, GROUP_COLORS_SKY, "green", &island->sky_ramp.dest.g, 0, 1, false);
 	_ld41_menu_add_slider(menu, GROUP_COLORS_SKY, "blue", &island->sky_ramp.dest.b, 0, 1, false);
 
-	_ld41_menu_add_slider(menu, GROUP_ROOT, "noise", &island->noise, 0, 1, false);
-
 	_ld41_menu_add_button(menu, GROUP_ROOT, "quit", &island->button_quit);
 }
 bool ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec setup_size)
