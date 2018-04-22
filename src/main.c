@@ -292,13 +292,9 @@ int main()
 			if(game_mode == MODE_POST_RECORDING)
 			{
 				if(whitgl_input_pressed(WHITGL_INPUT_ANY))
-				{
 					game_mode = MODE_NORMAL;
-					continue;
-				}
 			}
-
-			if(whitgl_input_pressed(WHITGL_INPUT_ESC))
+			if(island.button_quit)
 				running = false;
 			if(whitgl_sys_should_close())
 				running = false;

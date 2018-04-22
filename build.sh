@@ -2,7 +2,7 @@
 killall lofoten
 args=$(<args.txt)
 set -e
-./whitgl/scripts/build.sh
+./whitgl/scripts/build.sh optimize
 unamestr=`uname`
 if [[ "$unamestr" == 'Darwin' ]]; then
         game_dir='build/out/Lofoten.app/Contents/MacOS'

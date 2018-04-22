@@ -82,6 +82,8 @@ void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 	_ld41_menu_add_slider(menu, GROUP_COLORS_SKY, "blue", &island->sky_ramp.dest.b, 0, 1, false);
 
 	_ld41_menu_add_slider(menu, GROUP_ROOT, "noise", &island->noise, 0, 1, false);
+
+	_ld41_menu_add_button(menu, GROUP_ROOT, "quit", &island->button_quit);
 }
 void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec setup_size)
 {
@@ -111,7 +113,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 		pointer->up = false;
 
 	whitgl_bool old_pointer_up = pointer->up;
-	if(whitgl_input_pressed(WHITGL_INPUT_START))
+	if(whitgl_input_pressed(WHITGL_INPUT_START) ||whitgl_input_pressed(WHITGL_INPUT_ESC))
 		pointer->up = !pointer->up;
 	if(whitgl_input_pressed(WHITGL_INPUT_A) && !pointer->up)
 		pointer->up = true;

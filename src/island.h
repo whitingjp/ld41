@@ -37,6 +37,7 @@ typedef struct
 	whitgl_float noise;
 	whitgl_bool button_randomize;
 	whitgl_bool button_save_gif;
+	whitgl_bool button_quit;
 } ld41_island;
 static const ld41_island ld41_island_zero =
 {
@@ -44,6 +45,7 @@ static const ld41_island ld41_island_zero =
 	{{0,0,0},{0,0,0},{0,0,0}},
 	{{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
 	0,
+	false,
 	false,
 	false,
 };
