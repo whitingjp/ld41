@@ -34,13 +34,17 @@ def do_game(name, extra_cflags, data_types):
   n.newline()
   cflags, ldflags = build.flags(inputdir)
   cflags = cflags + ' -Iwhitgl/inc -Isrc ' + extra_cflags
+  ldflags += " -lole32 -luuid"
   n.variable('cflags', cflags)
   n.variable('ldflags', ldflags)
   n.newline()
   build.rules(n)
   obj = build.walk_src(n, srcdir, objdir)
   obj += build.walk_src(n, joinp('input', 'gif_lib'), objdir)
-  obj += n.build(joinp(objdir, 'nfd_cocoa.o'), 'cxx', joinp('input', 'nativefiledialog', 'src', 'nfd_cocoa.m'))
+  if build.plat == 'Darwin':
+    obj += n.build(joinp(objdir, 'nfd_cocoa.o'), 'cxx', joinp('input', 'nativefiledialog', 'src', 'nfd_cocoa.m'))
+  else:
+    obj += n.build(joinp(objdir, 'nfd_win.o'), 'cxx', joinp('input', 'nativefiledialog', 'src', 'nfd_win.cpp'))
   obj += n.build(joinp(objdir, 'nfd_common.o'), 'cxx', joinp('input', 'nativefiledialog', 'src', 'nfd_common.c'))
   whitgl = [joinp('whitgl','build','lib','whitgl.a')]
   targets = []
