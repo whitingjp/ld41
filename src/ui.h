@@ -56,11 +56,12 @@ typedef struct
 	ld41_menu_group group[MAX_DEPTH];
 	whitgl_int depth;
 	whitgl_int highlighted;
+	whitgl_ivec last_mouse;
 } ld41_menu_pointer;
-static const ld41_menu_pointer ld41_menu_pointer_zero = {{GROUP_ROOT}, 1, 0};
+static const ld41_menu_pointer ld41_menu_pointer_zero = {{GROUP_ROOT}, 1, 0, {0,0}};
 
 void ld41_menu_zero(ld41_menu* menu, ld41_island* island);
-void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer);
+void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec draw_pos);
 void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec draw_pos);
 
 #endif // LD41_UI_H_

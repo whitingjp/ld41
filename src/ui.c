@@ -74,8 +74,12 @@ void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 
 	_ld41_menu_add_slider(menu, GROUP_ROOT, "noise", &island->noise, 0, 1, false);
 }
-void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer)
+void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec draw_pos)
 {
+	whitgl_ivec mouse_pos = whitgl_input_mouse_pos(2);
+	whitgl_ivec mouse_diff = whitgl_ivec_sub(mouse_pos, pointer->last_mouse);
+	whitgl_bool mouse_moved = !whitgl_ivec_eq(mouse_diff, whitgl_ivec_zero);
+
 	whitgl_int move_dir = 0;
 
 	whitgl_int i;
@@ -88,6 +92,16 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer)
 				depth = j;
 		if(depth == -1)
 			continue;
+
+		whitgl_ivec p = draw_pos;
+		p.x += 6*2*depth;
+		whitgl_iaabb select_box = {{p.x-2-8, p.y-1}, {p.x+6*16+1+8, p.y+12}};
+		whitgl_iaabb mouse_box = {mouse_pos, {mouse_pos.x+1, mouse_pos.y+1}};
+		draw_pos.y += 12;
+
+		if(whitgl_iaabb_intersects(mouse_box, select_box) && mouse_moved)
+			pointer->highlighted = i;
+
 		if(i != pointer->highlighted)
 			continue;
 
@@ -110,7 +124,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer)
 		}
 		if(menu->items[i].type == TYPE_SUBMENU)
 		{
-			if(whitgl_input_pressed(WHITGL_INPUT_A))
+			if(whitgl_input_pressed(WHITGL_INPUT_A) || whitgl_input_pressed(WHITGL_INPUT_MOUSE_LEFT))
 			{
 				if(pointer->group[pointer->depth-1] == menu->items[i].submenu)
 				{
@@ -140,10 +154,12 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer)
 		if(depth != -1)
 		{
 			pointer->highlighted = trial;
-			return;
+			break;
 		}
 		trial += move_dir;
 	}
+
+	pointer->last_mouse = mouse_pos;
 }
 void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec draw_pos)
 {
@@ -170,8 +186,6 @@ void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whi
 		{
 			whitgl_iaabb left_box = {{p.x-2-8, p.y-1}, {p.x-2, p.y+sprite.size.y}};
 			whitgl_sys_draw_iaabb(left_box, ui_color);
-			// whitgl_iaabb right_box = {{p.x+sprite.size.x*strlen(menu->items[i].name)+1, p.y-1}, {p.x+sprite.size.x*strlen(menu->items[i].name)+1+8, p.y+sprite.size.y}};
-			// whitgl_sys_draw_iaabb(right_box, highlight_color);
 		} else
 		{
 			whitgl_iaabb left_box = {{p.x-2-7, p.y-1}, {p.x-3, p.y+sprite.size.y}};

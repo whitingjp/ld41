@@ -238,7 +238,8 @@ int main()
 
 			if(ui_up)
 			{
-				ld41_menu_update(menu, &menu_pointer);
+				whitgl_ivec ui_offset = {16-whitgl_fsmoothstep(1-ui_lerp,0,1)*setup.size.x, 16};
+				ld41_menu_update(menu, &menu_pointer, ui_offset);
 				island.sky_ramp.src = island.color_ramp.src;
 				island.sky_ramp.ctrl = island.color_ramp.ctrl;
 			}
@@ -324,17 +325,13 @@ int main()
 				gif_finalize(&gif);
 		}
 
-// #if defined _WIN32
-// 		if(whitgl_sys_window_focused())
-// 			Sleep(10);
-// 		else
-// 			Sleep(100);
-// #else
-// 		if(whitgl_sys_window_focused())
-// 			usleep(10*1000);
-// 		else
-// 			usleep(100*1000);
-// #endif
+#if defined _WIN32
+		if(whitgl_sys_window_focused())
+			Sleep(10);
+#else
+		if(whitgl_sys_window_focused())
+			usleep(10*1000);
+#endif
 	}
 
 	free(capture_data);
