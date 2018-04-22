@@ -65,9 +65,10 @@ void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 		snprintf(buffer, MAX_NAME_LENGTH, "bump %lld", i+1);
 		_ld41_menu_add_submenu(menu, GROUP_BUMPS, buffer, GROUP_BUMPS_1+i);
 		_ld41_menu_add_list(menu, GROUP_BUMPS_1+i, "type", &island->blobs[i].type, TYPE_MAX, blob_type_name_array);
+		_ld41_menu_add_slider(menu, GROUP_BUMPS_1+i, "radius", &island->blobs[i].size, 0, 1, false);
+		_ld41_menu_add_slider(menu, GROUP_BUMPS_1+i, "height", &island->blobs[i].height, 0, MAX_BUMP_HEIGHT, false);
 		_ld41_menu_add_slider(menu, GROUP_BUMPS_1+i, "angle", &island->blobs[i].angle, 0, whitgl_tau, true);
 		_ld41_menu_add_slider(menu, GROUP_BUMPS_1+i, "dist", &island->blobs[i].dist, -0.9, 0.9, false);
-		_ld41_menu_add_slider(menu, GROUP_BUMPS_1+i, "height", &island->blobs[i].height, 0, MAX_BUMP_HEIGHT, false);
 	}
 
 	_ld41_menu_add_submenu(menu, GROUP_ROOT, "colors", GROUP_COLORS);

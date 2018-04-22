@@ -137,7 +137,7 @@ float _ld41_blob_height(const ld41_height_blob* blob, whitgl_fvec p)
 	whitgl_fvec offset = whitgl_fvec_scale_val(whitgl_angle_to_fvec(blob->angle), blob->dist);
 	whitgl_fvec diff = whitgl_fvec_sub(p, offset);
 	whitgl_float mag = whitgl_fvec_magnitude(diff);
-	mag *= 0.1+blob->size*1.5;
+	mag /= 0.2+blob->size*2;
 
 	whitgl_float factor = 0;
 	switch(blob->type)
