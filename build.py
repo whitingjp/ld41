@@ -40,6 +40,8 @@ def do_game(name, extra_cflags, data_types):
   build.rules(n)
   obj = build.walk_src(n, srcdir, objdir)
   obj += build.walk_src(n, joinp('input', 'gif_lib'), objdir)
+  obj += n.build(joinp(objdir, 'nfd_cocoa.o'), 'cxx', joinp('input', 'nativefiledialog', 'src', 'nfd_cocoa.m'))
+  obj += n.build(joinp(objdir, 'nfd_common.o'), 'cxx', joinp('input', 'nativefiledialog', 'src', 'nfd_common.c'))
   whitgl = [joinp('whitgl','build','lib','whitgl.a')]
   targets = []
   targets += n.build(joinp(executabledir, target), 'link', obj+whitgl)
@@ -59,4 +61,4 @@ def do_game(name, extra_cflags, data_types):
   n.build('all', 'phony', targets)
   n.default('all')
 
-do_game('Game', '-Iinput', ['png','ogg','obj'])
+do_game('Lofoten', '-Iinput -Iinput/nativefiledialog/src/include', ['png','ogg','obj'])

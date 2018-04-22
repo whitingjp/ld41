@@ -20,7 +20,7 @@ typedef struct
 	GifFileType* gif_file;
 } gif_accumulator;
 
-void gif_start(gif_accumulator* accumulator, whitgl_ivec size, whitgl_sys_color* colors, whitgl_int num_colors);
+void gif_start(gif_accumulator* accumulator, const char* filename, whitgl_ivec size, whitgl_sys_color* colors, whitgl_int num_colors);
 void gif_add_frame(gif_accumulator* accumulator, whitgl_sys_color* data, int delay);
 void gif_finalize(gif_accumulator* accumulator);
 

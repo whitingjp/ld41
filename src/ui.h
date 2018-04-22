@@ -24,6 +24,7 @@ typedef enum
 {
 	TYPE_SUBMENU,
 	TYPE_SLIDER,
+	TYPE_BUTTON,
 } ld41_menu_type;
 
 typedef struct
@@ -31,7 +32,14 @@ typedef struct
 	whitgl_float* value;
 	whitgl_float min;
 	whitgl_float max;
+	whitgl_bool wrap;
 } ld41_slider_data;
+
+typedef struct
+{
+	whitgl_bool* value;
+} ld41_button_data;
+
 #define MAX_NAME_LENGTH (16)
 typedef struct
 {
@@ -40,6 +48,7 @@ typedef struct
 	ld41_menu_type type;
 	ld41_slider_data slider;
 	ld41_menu_group submenu;
+	ld41_button_data button;
 } ld41_menu_item;
 
 #define MAX_ITEMS (64)
@@ -55,11 +64,21 @@ typedef struct
 	ld41_menu_group group[MAX_DEPTH];
 	whitgl_int depth;
 	whitgl_int highlighted;
+	whitgl_ivec last_mouse;
+	whitgl_bool mouse_interacting;
+
+	whitgl_float idle_bounce;
+	whitgl_bool ever_opened;
+
+	whitgl_bool up;
+	whitgl_float lerp;
+
+	whitgl_int last_valid;
 } ld41_menu_pointer;
-static const ld41_menu_pointer ld41_menu_pointer_zero = {{GROUP_ROOT}, 1, 0};
+static const ld41_menu_pointer ld41_menu_pointer_zero = {{GROUP_ROOT}, 1, 0, {0,0}, false, 0, false, false, 0, 0};
 
 void ld41_menu_zero(ld41_menu* menu, ld41_island* island);
-void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer);
-void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec draw_pos);
+void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec setup_size);
+void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec setup_size);
 
 #endif // LD41_UI_H_

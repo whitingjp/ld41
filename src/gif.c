@@ -7,13 +7,13 @@
 
 #include "gif.h"
 
-void quit_gif_error(int gif_error)
+void quit_gif_error(const char* location, int gif_error)
 {
-	printf("%s",GifErrorString(gif_error));
+	printf("%s %s",location, GifErrorString(gif_error));
 	exit(EXIT_FAILURE);
 }
 
-void gif_start(gif_accumulator* accumulator, whitgl_ivec size, whitgl_sys_color* colors, whitgl_int num_colors)
+void gif_start(gif_accumulator* accumulator, const char* filename, whitgl_ivec size, whitgl_sys_color* colors, whitgl_int num_colors)
 {
 	int num_pixels = size.x*size.y;
 	accumulator->size = size;
@@ -26,9 +26,9 @@ void gif_start(gif_accumulator* accumulator, whitgl_ivec size, whitgl_sys_color*
 		accumulator->accumulated[i] = 0;
 
 	int error_code;
-	accumulator->gif_file = EGifOpenFileName("out.gif", false, &error_code);
+	accumulator->gif_file = EGifOpenFileName(filename, false, &error_code);
 	if(!accumulator->gif_file)
-		quit_gif_error(error_code);
+		quit_gif_error("!accumulator->gif_file", error_code);
 
 	if(num_colors > 256)
 		num_colors = 256;
@@ -58,22 +58,22 @@ void gif_start(gif_accumulator* accumulator, whitgl_ivec size, whitgl_sys_color*
 	EGifSetGifVersion(accumulator->gif_file, true);
 
     if (EGifPutScreenDesc(accumulator->gif_file, size.x, size.y, GifBitSize(power_num_colors), 0, color_map) == GIF_ERROR)
-		quit_gif_error(accumulator->gif_file->Error);
+		quit_gif_error("EGifPutScreenDesc", accumulator->gif_file->Error);
 
 
 	GifByteType buf[16];
 	memcpy(buf, "NETSCAPE2.0", 11);
 	if(EGifPutExtensionLeader(accumulator->gif_file, 0xFF) == GIF_ERROR)
-		quit_gif_error(accumulator->gif_file->Error);
+		quit_gif_error("EGifPutExtensionLeader", accumulator->gif_file->Error);
     if(EGifPutExtensionBlock(accumulator->gif_file, 11, buf) == GIF_ERROR)
-   		quit_gif_error(accumulator->gif_file->Error);
+   		quit_gif_error("EGifPutExtensionBlock", accumulator->gif_file->Error);
 	buf[0] = 1;
 	buf[1] = 0;
 	buf[2] = 0;
     if(EGifPutExtensionBlock(accumulator->gif_file, 3, buf) == GIF_ERROR)
-   		quit_gif_error(accumulator->gif_file->Error);
+   		quit_gif_error("EGifPutExtensionBlock", accumulator->gif_file->Error);
     if(EGifPutExtensionTrailer(accumulator->gif_file) == GIF_ERROR)
-    	quit_gif_error(accumulator->gif_file->Error);
+    	quit_gif_error("EGifPutExtensionTrailer", accumulator->gif_file->Error);
 
 }
 void gif_add_frame(gif_accumulator* accumulator, whitgl_sys_color *data, int delay)
@@ -148,19 +148,19 @@ void gif_add_frame(gif_accumulator* accumulator, whitgl_sys_color *data, int del
     EGifPutExtensionTrailer(accumulator->gif_file);
 
     if (EGifPutImageDesc(accumulator->gif_file, bounds.a.x, bounds.a.y, bounds.b.x-bounds.a.x, bounds.b.y-bounds.a.y, false, NULL) == GIF_ERROR)
-		quit_gif_error(accumulator->gif_file->Error);
+		quit_gif_error("EGifPutImageDesc", accumulator->gif_file->Error);
 
 	for(i=bounds.a.y; i<bounds.b.y; i++)
 	{
 		if (EGifPutLine(accumulator->gif_file, &accumulator->render[i*accumulator->size.x+bounds.a.x], bounds.b.x-bounds.a.x) == GIF_ERROR)
-			quit_gif_error(accumulator->gif_file->Error);
+			quit_gif_error("EGifPutLine", accumulator->gif_file->Error);
 	}
 }
 void gif_finalize(gif_accumulator* accumulator)
 {
 	int error_code;
     if (EGifCloseFile(accumulator->gif_file, &error_code) == GIF_ERROR)
-    	quit_gif_error(error_code);
+    	quit_gif_error("EGifCloseFile", error_code);
 
 	free(accumulator->current);
 	free(accumulator->accumulated);

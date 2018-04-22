@@ -1,12 +1,12 @@
 #!/bin/bash
-killall game
+killall lofoten
 args=$(<args.txt)
 set -e
 ./whitgl/scripts/build.sh
 unamestr=`uname`
 if [[ "$unamestr" == 'Darwin' ]]; then
-        game_dir='build/out/Game.app/Contents/MacOS'
+        game_dir='build/out/Lofoten.app/Contents/MacOS'
 else
         game_dir='build/out'
 fi
-(cd $game_dir; ./game hotreload $args "$@" &)
+(cd $game_dir; ./lofoten hotreload $args "$@" &)

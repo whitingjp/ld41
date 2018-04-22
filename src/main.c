@@ -19,10 +19,13 @@
 #include <whitgl/sound.h>
 #include <whitgl/sys.h>
 #include <whitgl/timer.h>
+#include <nfd.h>
 
 #include <island.h>
 #include <gif.h>
 #include <ui.h>
+
+
 
 const char* model_src = "\
 #version 150\
@@ -101,7 +104,8 @@ int main()
 	setup.size.y = 220*1;
 	setup.pixel_size = 2;
 	setup.start_focused = false;
-	setup.name = "game";
+	setup.name = "Lofoten";
+	setup.num_framebuffers = 2;
 
 	WHITGL_LOG("Initiating sys");
 	if(!whitgl_sys_init(&setup))
@@ -198,11 +202,11 @@ int main()
 	ld41_menu_zero(menu, &island);
 	ld41_menu_pointer menu_pointer = ld41_menu_pointer_zero;
 
-	whitgl_bool ui_up = false;
-	whitgl_float ui_lerp = 0;
 	whitgl_fvec3 camera_to = whitgl_fvec3_zero;
 	whitgl_fvec3 camera_pos = whitgl_fvec3_zero;
 	whitgl_float time = 0;
+
+	float progress_bar_lerp = 1;
 
 	bool running = true;
 	while(running)
@@ -213,11 +217,6 @@ int main()
 		{
 			whitgl_input_update();
 			time = whitgl_fwrap(time+1/480.0, 0, 1);
-			if(whitgl_input_pressed(WHITGL_INPUT_SELECT))
-			{
-				gif_start(&gif, setup.size, colors, num_colors*2);
-				frames_remaining = 128;
-			}
 			// if(frames_remaining % 32 == 0)
 			// {
 			// 	seed = whitgl_random_seed_init(whitgl_iwrap(frames_remaining/32+1, 0, 8)+8);
@@ -226,35 +225,50 @@ int main()
 			// 	island_target = ld41_island_random(&seed);
 			// 	island_lerp = 0;
 			// }
-			if(whitgl_input_pressed(WHITGL_INPUT_Y))
+			if(island.button_randomize)
 			{
+				island.button_randomize = false;
 				island_prev = island;
 				island_target = ld41_island_random(&seed);
 				island_lerp = 0;
 			}
-			if(whitgl_input_pressed(WHITGL_INPUT_START) || whitgl_input_pressed(WHITGL_INPUT_X))
-				ui_up = !ui_up;
-
-			if(ui_up)
-				ui_lerp = whitgl_fclamp(ui_lerp+0.05, 0, 1);
-			else
-				ui_lerp = whitgl_fclamp(ui_lerp-0.05, 0, 1);
-
-			if(ui_up)
+			if(island.button_save_gif)
 			{
-				ld41_menu_update(menu, &menu_pointer);
-				island.sky_ramp.src = island.color_ramp.src;
-				island.sky_ramp.ctrl = island.color_ramp.ctrl;
+				island.button_save_gif = false;
+				nfdchar_t *savePath = NULL;
+				nfdresult_t result = NFD_SaveDialog( "gif", NULL, &savePath );
+				if ( result == NFD_OKAY )
+				{
+					WHITGL_LOG("Save gif to %s", savePath);
+					gif_start(&gif, savePath, setup.size, colors, num_colors*2);
+					frames_remaining = 128;
+				}
+				else if ( result == NFD_CANCEL )
+				{
+					WHITGL_LOG("User Cancelled");
+				}
+				else
+				{
+					WHITGL_LOG("Dialog Error: %s", NFD_GetError() );
+				}
 			}
+
+			if(frames_remaining == 0)
+				ld41_menu_update(menu, &menu_pointer, setup.size);
+			else
+				menu_pointer.lerp = whitgl_fclamp(menu_pointer.lerp-0.01, 0, 1);
+			island.sky_ramp.src = island.color_ramp.src;
+			island.sky_ramp.ctrl = island.color_ramp.ctrl;
 
 			const whitgl_fvec3 regular_camera_to = {0,0,0};
 			const whitgl_fvec3 regular_camera_pos = {0,0.25,-1.3};
 			const whitgl_fvec3 ui_camera_to = {0.5,0,0};
 			const whitgl_fvec3 ui_camera_pos = {0,0.3,-1.6};
 
-			whitgl_float ui_lerp_smooth = whitgl_fsmoothstep(ui_lerp, 0, 1);
+			whitgl_float ui_lerp_smooth = whitgl_fsmoothstep(menu_pointer.lerp, 0, 1);
 			camera_to = whitgl_fvec3_interpolate(regular_camera_to, ui_camera_to, ui_lerp_smooth);
 			camera_pos = whitgl_fvec3_interpolate(regular_camera_pos, ui_camera_pos, ui_lerp_smooth);
+
 			if(island_lerp < 1)
 			{
 				island_lerp = island_lerp+1/24.0;
@@ -269,16 +283,19 @@ int main()
 			whitgl_sys_update_image_from_data(0, color_image_size, (unsigned char*)colors);
 			whitgl_sys_set_clear_color(colors[1]);
 
-
+			if(frames_remaining > 0)
+				progress_bar_lerp = whitgl_fclamp(progress_bar_lerp-0.05, 0, 1);
+			else
+				progress_bar_lerp = whitgl_fclamp(progress_bar_lerp+0.05, 0, 1);
 
 			if(whitgl_input_pressed(WHITGL_INPUT_ESC))
 				running = false;
 			if(whitgl_sys_should_close())
 				running = false;
 		}
-		if(frames_remaining > 0)
-			whitgl_sys_capture_frame_to_data(capture_data, true);
-		whitgl_sys_draw_init(0);
+		if(frames_remaining > 0 && menu_pointer.lerp <= 0)
+			whitgl_sys_capture_frame_to_data(capture_data, true, 1);
+		whitgl_sys_draw_init(1);
 
 		whitgl_sys_enable_depth(true);
 
@@ -288,12 +305,20 @@ int main()
 
 		whitgl_float render_time = time;
 		if(frames_remaining > 0)
-			render_time = (128.0-frames_remaining)/128.0;
+		{
+			if(menu_pointer.lerp > 0)
+			{
+				render_time = whitgl_finterpolate(1, time, whitgl_fsmoothstep(menu_pointer.lerp, 0, 1));
+			}
+			else
+			{
+				render_time = (128.0-frames_remaining)/128.0;
+			}
+		}
 		whitgl_fmat rotate = whitgl_fmat_rot_y(render_time*whitgl_tau);
 		whitgl_fvec3 spun_camera_pos = whitgl_fvec3_apply_fmat(camera_pos, rotate);
 		whitgl_fvec3 spun_camera_to = whitgl_fvec3_apply_fmat(camera_to, rotate);
 		whitgl_fmat view = whitgl_fmat_lookAt(spun_camera_pos, spun_camera_to, up);
-
 
 		glFrontFace(GL_CW);
 		static const whitgl_fmat whitgl_fmat_flipy =
@@ -311,33 +336,49 @@ int main()
 		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, whitgl_fmat_identity, view, perspective);
 		whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_0, whitgl_fmat_identity, view, perspective);
 
+		whitgl_sys_draw_init(0);
+		whitgl_fmat ortho = whitgl_fmat_orthographic(0, setup.size.x, 0, setup.size.y, 0, 1.01);
+		whitgl_fvec3 pane_verts[4] =
+		{
+			{0,setup.size.y,0},
+			{setup.size.x,setup.size.y,0},
+			{0,0,0},
+			{setup.size.x,0,0},
+		};
+		whitgl_sys_draw_buffer_pane(1, pane_verts, WHITGL_SHADER_TEXTURE, whitgl_fmat_identity, whitgl_fmat_identity, ortho);
+
 		whitgl_sys_enable_depth(false);
 
-		whitgl_ivec ui_offset = {16-whitgl_fsmoothstep(1-ui_lerp,0,1)*setup.size.x, 16};
+		if(frames_remaining == 0 || menu_pointer.lerp > 0.5)
+			ld41_menu_draw(menu, &menu_pointer, setup.size);
 
-		ld41_menu_draw(menu, &menu_pointer, ui_offset);
-
+		whitgl_ivec mid = {setup.size.x/2, setup.size.y-32};
+		whitgl_ivec size = {setup.size.x/2, 16};
+		whitgl_float off = whitgl_fsmoothstep(progress_bar_lerp, 0, 1)*setup.size.y;
+		whitgl_iaabb progress_bar = {{mid.x-size.x/2, mid.y-size.y/2+off}, {mid.x+size.x/2, mid.y+size.y/2+off}};
+		whitgl_sys_draw_hollow_iaabb(progress_bar, 1, whitgl_sys_color_white);
+		progress_bar.b.x = progress_bar.a.x+size.x*(1-frames_remaining/128.0);
+		whitgl_sys_draw_iaabb(progress_bar, whitgl_sys_color_white);
 
 		whitgl_sys_draw_finish();
 
-		if(frames_remaining > 0)
+		if(frames_remaining > 0 && menu_pointer.lerp <= 0)
 		{
 			gif_add_frame(&gif, capture_data, 4);
 			frames_remaining--;
 			if(frames_remaining == 0)
+			{
 				gif_finalize(&gif);
+				time = 0;
+			}
 		}
 
 #if defined _WIN32
 		if(whitgl_sys_window_focused())
 			Sleep(10);
-		else
-			Sleep(100);
 #else
 		if(whitgl_sys_window_focused())
 			usleep(10*1000);
-		else
-			usleep(100*1000);
 #endif
 	}
 

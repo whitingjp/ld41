@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key>
-	<string>game</string>
+	<string>lofoten</string>
 	<key>CFBundleIconFile</key>
 	<string>Icon</string>
 	<key>CFBundleIdentifier</key>
-	<string>companyid.Game</string>
+	<string>companyid.Lofoten</string>
 </dict>
 </plist>
