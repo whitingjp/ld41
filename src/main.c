@@ -21,8 +21,9 @@
 #include <whitgl/timer.h>
 #include <nfd.h>
 
-#include <island.h>
+#include <camera.h>
 #include <gif.h>
+#include <island.h>
 #include <ui.h>
 
 
@@ -210,9 +211,7 @@ int main()
 	ld41_menu_zero(menu, &island);
 	ld41_menu_pointer menu_pointer = ld41_menu_pointer_zero;
 
-	whitgl_fvec3 camera_to = whitgl_fvec3_zero;
-	whitgl_fvec3 camera_pos = whitgl_fvec3_zero;
-	whitgl_float time = 0;
+	ld41_camera camera = ld41_camera_zero;
 
 	float progress_bar_lerp = 1;
 
@@ -224,7 +223,6 @@ int main()
 		while(whitgl_timer_should_do_frame(60))
 		{
 			whitgl_input_update();
-			time = whitgl_fwrap(time+1/480.0, 0, 1);
 			// if(frames_remaining % 32 == 0)
 			// {
 			// 	seed = whitgl_random_seed_init(whitgl_iwrap(frames_remaining/32+1, 0, 8)+8);
@@ -270,14 +268,7 @@ int main()
 			island.sky_ramp.src = island.color_ramp.src;
 			island.sky_ramp.ctrl = island.color_ramp.ctrl;
 
-			const whitgl_fvec3 regular_camera_to = {0,0,0};
-			const whitgl_fvec3 regular_camera_pos = {0,0.25,-1.3};
-			const whitgl_fvec3 ui_camera_to = {0.5,0,0};
-			const whitgl_fvec3 ui_camera_pos = {0,0.3,-1.6};
-
-			whitgl_float ui_lerp_smooth = whitgl_fsmoothstep(menu_pointer.lerp, 0, 1);
-			camera_to = whitgl_fvec3_interpolate(regular_camera_to, ui_camera_to, ui_lerp_smooth);
-			camera_pos = whitgl_fvec3_interpolate(regular_camera_pos, ui_camera_pos, ui_lerp_smooth);
+			ld41_camera_update(&camera, game_mode == MODE_NORMAL && menu_pointer.up, game_mode == MODE_RECORDING);
 
 			if(island_lerp < 1)
 			{
@@ -317,24 +308,19 @@ int main()
 
 		whitgl_float fov = whitgl_tau*0.2;
 		whitgl_fmat perspective = whitgl_fmat_perspective(fov, (float)setup.size.x/(float)setup.size.y, 0.1f, 20.0f);
-		whitgl_fvec3 up = {0,1,0};
 
-		whitgl_float render_time = time;
 		if(game_mode == MODE_RECORDING)
 		{
 			if(menu_pointer.lerp > 0)
 			{
-				render_time = whitgl_finterpolate(1, time, whitgl_fsmoothstep(menu_pointer.lerp, 0, 1));
+				camera.rot_y = (camera.rot_y*9+1)/10.0;
 			}
 			else
 			{
-				render_time = (128.0-frames_remaining)/128.0;
+				camera.rot_y = (128.0-frames_remaining)/128.0;
 			}
 		}
-		whitgl_fmat rotate = whitgl_fmat_rot_y(render_time*whitgl_tau);
-		whitgl_fvec3 spun_camera_pos = whitgl_fvec3_apply_fmat(camera_pos, rotate);
-		whitgl_fvec3 spun_camera_to = whitgl_fvec3_apply_fmat(camera_to, rotate);
-		whitgl_fmat view = whitgl_fmat_lookAt(spun_camera_pos, spun_camera_to, up);
+		whitgl_fmat view = ld41_camera_view(&camera);
 
 		glFrontFace(GL_CW);
 		static const whitgl_fmat whitgl_fmat_flipy =
@@ -394,7 +380,7 @@ int main()
 			if(frames_remaining == 0)
 			{
 				gif_finalize(&gif);
-				time = 0;
+				camera.rot_y = 0;
 				game_mode = MODE_POST_RECORDING;
 			}
 		}
