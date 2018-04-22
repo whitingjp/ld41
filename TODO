@@ -5,9 +5,6 @@ Submit
 Hopefully
 ---------
 Animated gif saving
-  Render island bit to a different buffer (always), copy that to regular drawing buffer (always)
-  Lerp out of main mode before starting, want to capture gif in zoomed in state.
-  Render a progress bar on regular buffer while gif saving takes place.  Remove menu to emphasise non interactability.
   Think about what do do once save is complete, does user need to press something?
 
 Nice camera controls when not in menu

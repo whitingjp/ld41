@@ -201,6 +201,8 @@ int main()
 	whitgl_fvec3 camera_pos = whitgl_fvec3_zero;
 	whitgl_float time = 0;
 
+	float progress_bar_lerp = 1;
+
 	bool running = true;
 	while(running)
 	{
@@ -246,7 +248,10 @@ int main()
 				}
 			}
 
-			ld41_menu_update(menu, &menu_pointer, setup.size);
+			if(frames_remaining == 0)
+				ld41_menu_update(menu, &menu_pointer, setup.size);
+			else
+				menu_pointer.lerp = whitgl_fclamp(menu_pointer.lerp-0.01, 0, 1);
 			island.sky_ramp.src = island.color_ramp.src;
 			island.sky_ramp.ctrl = island.color_ramp.ctrl;
 
@@ -258,6 +263,7 @@ int main()
 			whitgl_float ui_lerp_smooth = whitgl_fsmoothstep(menu_pointer.lerp, 0, 1);
 			camera_to = whitgl_fvec3_interpolate(regular_camera_to, ui_camera_to, ui_lerp_smooth);
 			camera_pos = whitgl_fvec3_interpolate(regular_camera_pos, ui_camera_pos, ui_lerp_smooth);
+
 			if(island_lerp < 1)
 			{
 				island_lerp = island_lerp+1/24.0;
@@ -272,14 +278,17 @@ int main()
 			whitgl_sys_update_image_from_data(0, color_image_size, (unsigned char*)colors);
 			whitgl_sys_set_clear_color(colors[1]);
 
-
+			if(frames_remaining > 0)
+				progress_bar_lerp = whitgl_fclamp(progress_bar_lerp-0.05, 0, 1);
+			else
+				progress_bar_lerp = whitgl_fclamp(progress_bar_lerp+0.05, 0, 1);
 
 			if(whitgl_input_pressed(WHITGL_INPUT_ESC))
 				running = false;
 			if(whitgl_sys_should_close())
 				running = false;
 		}
-		if(frames_remaining > 0)
+		if(frames_remaining > 0 && menu_pointer.lerp <= 0)
 			whitgl_sys_capture_frame_to_data(capture_data, true, 1);
 		whitgl_sys_draw_init(1);
 
@@ -291,7 +300,16 @@ int main()
 
 		whitgl_float render_time = time;
 		if(frames_remaining > 0)
-			render_time = (128.0-frames_remaining)/128.0;
+		{
+			if(menu_pointer.lerp > 0)
+			{
+				render_time = whitgl_finterpolate(1, time, whitgl_fsmoothstep(menu_pointer.lerp, 0, 1));
+			}
+			else
+			{
+				render_time = (128.0-frames_remaining)/128.0;
+			}
+		}
 		whitgl_fmat rotate = whitgl_fmat_rot_y(render_time*whitgl_tau);
 		whitgl_fvec3 spun_camera_pos = whitgl_fvec3_apply_fmat(camera_pos, rotate);
 		whitgl_fvec3 spun_camera_to = whitgl_fvec3_apply_fmat(camera_to, rotate);
@@ -326,17 +344,28 @@ int main()
 
 		whitgl_sys_enable_depth(false);
 
-		ld41_menu_draw(menu, &menu_pointer, setup.size);
+		if(frames_remaining == 0 || menu_pointer.lerp > 0.5)
+			ld41_menu_draw(menu, &menu_pointer, setup.size);
 
+		whitgl_ivec mid = {setup.size.x/2, setup.size.y-32};
+		whitgl_ivec size = {setup.size.x/2, 16};
+		whitgl_float off = whitgl_fsmoothstep(progress_bar_lerp, 0, 1)*setup.size.y;
+		whitgl_iaabb progress_bar = {{mid.x-size.x/2, mid.y-size.y/2+off}, {mid.x+size.x/2, mid.y+size.y/2+off}};
+		whitgl_sys_draw_hollow_iaabb(progress_bar, 1, whitgl_sys_color_white);
+		progress_bar.b.x = progress_bar.a.x+size.x*(1-frames_remaining/128.0);
+		whitgl_sys_draw_iaabb(progress_bar, whitgl_sys_color_white);
 
 		whitgl_sys_draw_finish();
 
-		if(frames_remaining > 0)
+		if(frames_remaining > 0 && menu_pointer.lerp <= 0)
 		{
 			gif_add_frame(&gif, capture_data, 4);
 			frames_remaining--;
 			if(frames_remaining == 0)
+			{
 				gif_finalize(&gif);
+				time = 0;
+			}
 		}
 
 #if defined _WIN32
