@@ -57,8 +57,9 @@ typedef struct
 	whitgl_int depth;
 	whitgl_int highlighted;
 	whitgl_ivec last_mouse;
+	whitgl_bool mouse_interacting;
 } ld41_menu_pointer;
-static const ld41_menu_pointer ld41_menu_pointer_zero = {{GROUP_ROOT}, 1, 0, {0,0}};
+static const ld41_menu_pointer ld41_menu_pointer_zero = {{GROUP_ROOT}, 1, 0, {0,0}, false};
 
 void ld41_menu_zero(ld41_menu* menu, ld41_island* island);
 void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec draw_pos);
