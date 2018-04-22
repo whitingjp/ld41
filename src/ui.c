@@ -1,5 +1,6 @@
 #include "ui.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #include <whitgl/input.h>
@@ -40,28 +41,34 @@ void _ld41_menu_add_button(ld41_menu* menu, ld41_menu_group group, const char* n
 	menu->items[menu->num_items].button.value = value;
 	menu->num_items++;
 }
+void _ld41_menu_add_list(ld41_menu* menu, ld41_menu_group group, const char* name, whitgl_int* value, whitgl_int max, char** name_array)
+{
+	_ld41_menu_common(menu, group, name);
+	menu->items[menu->num_items].type = TYPE_LIST;
+	menu->items[menu->num_items].list.value = value;
+	menu->items[menu->num_items].list.max = max;
+	menu->items[menu->num_items].list.name_array = name_array;
+	menu->num_items++;
+}
+
 void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 {
 	menu->num_items = 0;
 	_ld41_menu_add_button(menu, GROUP_ROOT, "randomize", &island->button_randomize);
 	_ld41_menu_add_button(menu, GROUP_ROOT, "save gif", &island->button_save_gif);
 	_ld41_menu_add_submenu(menu, GROUP_ROOT, "bumps", GROUP_BUMPS);
-	_ld41_menu_add_submenu(menu, GROUP_BUMPS, "bump 1", GROUP_BUMPS_1);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_1, "angle", &island->blobs[0].angle, 0, whitgl_tau, true);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_1, "dist", &island->blobs[0].dist, -0.9, 0.9, false);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_1, "height", &island->blobs[0].height, 0, MAX_BUMP_HEIGHT, false);
-	_ld41_menu_add_submenu(menu, GROUP_BUMPS, "bump 2", GROUP_BUMPS_2);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_2, "angle", &island->blobs[1].angle, 0, whitgl_tau, true);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_2, "dist", &island->blobs[1].dist, -0.9, 0.9, false);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_2, "height", &island->blobs[1].height, 0, MAX_BUMP_HEIGHT, false);
-	_ld41_menu_add_submenu(menu, GROUP_BUMPS, "bump 3", GROUP_BUMPS_3);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_3, "angle", &island->blobs[2].angle, 0, whitgl_tau, true);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_3, "dist", &island->blobs[2].dist, -0.9, 0.9, false);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_3, "height", &island->blobs[2].height, 0, MAX_BUMP_HEIGHT, false);
-	_ld41_menu_add_submenu(menu, GROUP_BUMPS, "bump 4", GROUP_BUMPS_4);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_4, "angle", &island->blobs[3].angle, 0, whitgl_tau, true);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_4, "dist", &island->blobs[3].dist, -0.9, 0.9, false);
-	_ld41_menu_add_slider(menu, GROUP_BUMPS_4, "height", &island->blobs[3].height, 0, MAX_BUMP_HEIGHT, false);
+
+	whitgl_int i;
+	for(i=0; i<NUM_BLOBS; i++)
+	{
+		char buffer[MAX_NAME_LENGTH];
+		snprintf(buffer, MAX_NAME_LENGTH, "bump %lld", i+1);
+		_ld41_menu_add_submenu(menu, GROUP_BUMPS, buffer, GROUP_BUMPS_1+i);
+		_ld41_menu_add_list(menu, GROUP_BUMPS_1+i, "type", &island->blobs[i].type, TYPE_MAX, blob_type_name_array);
+		_ld41_menu_add_slider(menu, GROUP_BUMPS_1+i, "angle", &island->blobs[i].angle, 0, whitgl_tau, true);
+		_ld41_menu_add_slider(menu, GROUP_BUMPS_1+i, "dist", &island->blobs[i].dist, -0.9, 0.9, false);
+		_ld41_menu_add_slider(menu, GROUP_BUMPS_1+i, "height", &island->blobs[i].height, 0, MAX_BUMP_HEIGHT, false);
+	}
 
 	_ld41_menu_add_submenu(menu, GROUP_ROOT, "colors", GROUP_COLORS);
 	_ld41_menu_add_submenu(menu, GROUP_COLORS, "bottom", GROUP_COLORS_BOTTOM);
@@ -221,6 +228,27 @@ bool ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 				update_required = true;
 			}
 		}
+		if(menu->items[i].type == TYPE_LIST)
+		{
+			whitgl_int dir = 0;
+			if(whitgl_input_pressed(WHITGL_INPUT_LEFT))
+				dir--;
+			if(whitgl_input_pressed(WHITGL_INPUT_RIGHT))
+				dir++;
+
+			whitgl_int box_width = sprite.size.x*8+1+8;
+			whitgl_int mid_x = p.x+sprite.size.x*8+box_width/2;
+			if(whitgl_input_pressed(WHITGL_INPUT_MOUSE_LEFT))
+			{
+				if(mouse_pos.x < mid_x)
+					dir--;
+				else
+					dir++;
+			}
+
+			*menu->items[i].list.value = whitgl_iclamp(*menu->items[i].list.value+dir, 0, menu->items[i].list.max-1);
+			update_required = true;
+		}
 		draw_pos.y += 12;
 	}
 
@@ -318,9 +346,10 @@ void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whi
 				whitgl_sys_draw_text(sprite, "<", marker_pos);
 		}
 
+		whitgl_int box_width = sprite.size.x*8+1+8;
 		if(menu->items[i].type == TYPE_SLIDER)
 		{
-			whitgl_iaabb slider_box = {{p.x+sprite.size.x*8, p.y}, {p.x+sprite.size.x*16+1+8, p.y+sprite.size.y-1}};
+			whitgl_iaabb slider_box = {{p.x+sprite.size.x*8, p.y+2}, {p.x+sprite.size.x*8+box_width, p.y+sprite.size.y-3}};
 			whitgl_sys_draw_hollow_iaabb(slider_box, 1, ui_color);
 			whitgl_int total_width = slider_box.b.x-slider_box.a.x-2;
 			whitgl_float dist = menu->items[i].slider.max-menu->items[i].slider.min;
@@ -330,6 +359,23 @@ void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whi
 				whitgl_sys_draw_iaabb(slider_box, ui_color);
 			else
 				whitgl_sys_draw_iaabb(slider_box, highlight_color);
+		}
+
+		if(menu->items[i].type == TYPE_LIST)
+		{
+			const char* label = menu->items[i].list.name_array[*menu->items[i].list.value];
+			whitgl_int string_size = sprite.size.x*strlen(label);
+			whitgl_ivec label_pos = {p.x+sprite.size.x*8+(box_width-string_size)/2, p.y};
+			whitgl_sys_draw_text(sprite, label, label_pos);
+			if(i == pointer->highlighted)
+			{
+				whitgl_ivec left_pos = {label_pos.x-sprite.size.x*1.5, label_pos.y};
+				if(*menu->items[i].list.value > 0)
+					whitgl_sys_draw_text(sprite, "<", left_pos);
+				whitgl_ivec right_pos = {label_pos.x+string_size+sprite.size.x*0.5+1, label_pos.y};
+				if(*menu->items[i].list.value < menu->items[i].list.max-1)
+					whitgl_sys_draw_text(sprite, ">", right_pos);
+			}
 		}
 		draw_pos.y += sprite.size.y;
 	}

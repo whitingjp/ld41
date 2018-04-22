@@ -30,10 +30,19 @@ typedef enum
 	TYPE_MAX,
 } ld41_blob_type;
 
+static char* blob_type_name_array[] =
+{
+	"mound",
+	"plateau",
+	"spike",
+	"noise",
+	"dip",
+	"max error",
+};
 #define MAX_BUMP_HEIGHT (0.5)
 typedef struct
 {
-	ld41_blob_type type;
+	whitgl_int type;
 	whitgl_float angle;
 	whitgl_float dist;
 	whitgl_float height;

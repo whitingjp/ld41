@@ -25,6 +25,7 @@ typedef enum
 	TYPE_SUBMENU,
 	TYPE_SLIDER,
 	TYPE_BUTTON,
+	TYPE_LIST,
 } ld41_menu_type;
 
 typedef struct
@@ -40,6 +41,13 @@ typedef struct
 	whitgl_bool* value;
 } ld41_button_data;
 
+typedef struct
+{
+	whitgl_int* value;
+	whitgl_int max;
+	char** name_array;
+} ld41_list_data;
+
 #define MAX_NAME_LENGTH (16)
 typedef struct
 {
@@ -49,6 +57,7 @@ typedef struct
 	ld41_slider_data slider;
 	ld41_menu_group submenu;
 	ld41_button_data button;
+	ld41_list_data list;
 } ld41_menu_item;
 
 #define MAX_ITEMS (64)
