@@ -117,7 +117,6 @@ int main()
 	setup.size.x = 440*1;
 	setup.size.y = 220*1;
 	setup.pixel_size = 2;
-	// setup.start_focused = false;
 	setup.name = "Lofoten";
 	setup.num_framebuffers = 2;
 
@@ -200,12 +199,17 @@ int main()
 	if(!whitgl_load_model(1, "data/model/skysphere.wmd"))
 		WHITGL_PANIC("Failed to load skysphere");
 
-	whitgl_random_seed seed = whitgl_random_seed_init(whitgl_sys_get_time()*10000);
 	ld41_island island = ld41_island_zero;
-	island.button_randomize = true;
+	whitgl_random_seed seed = whitgl_random_seed_init(whitgl_sys_get_time()*100000);
+	float amount_above = 0;
+	while(amount_above < 100)
+	{
+		island = ld41_island_random(&seed);
+		amount_above = ld41_island_update_model(&island);
+	}
 	ld41_island island_prev = island;
 	ld41_island island_target = island;
-	whitgl_float island_lerp = 0.0;
+	whitgl_float island_lerp = 0.99;
 
 	whitgl_sys_color colors[num_colors*2];
 	colors[num_colors] = whitgl_sys_color_white;
