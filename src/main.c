@@ -7,6 +7,11 @@
 #define GLEW_STATIC
 #include <GL/glew.h>
 
+#if defined _WIN32
+#include <windows.h> // TODO - Check this is required
+#include <direct.h>
+#endif
+
 #include <whitgl/input.h>
 #include <whitgl/logging.h>
 #include <whitgl/math.h>
