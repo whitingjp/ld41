@@ -35,6 +35,7 @@ typedef struct
 	ld41_color_ramp sky_ramp;
 	ld41_height_blob blobs[NUM_BLOBS];
 	whitgl_float noise;
+	whitgl_bool randomize;
 } ld41_island;
 static const ld41_island ld41_island_zero =
 {
@@ -42,6 +43,7 @@ static const ld41_island ld41_island_zero =
 	{{0,0,0},{0,0,0},{0,0,0}},
 	{{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
 	0,
+	false,
 };
 
 bool ld41_island_init();

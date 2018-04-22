@@ -33,9 +33,17 @@ void _ld41_menu_add_slider(ld41_menu* menu, ld41_menu_group group, const char* n
 	menu->items[menu->num_items].slider.wrap = wrap;
 	menu->num_items++;
 }
+void _ld41_menu_add_button(ld41_menu* menu, ld41_menu_group group, const char* name, whitgl_bool* value)
+{
+	_ld41_menu_common(menu, group, name);
+	menu->items[menu->num_items].type = TYPE_BUTTON;
+	menu->items[menu->num_items].button.value = value;
+	menu->num_items++;
+}
 void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 {
 	menu->num_items = 0;
+	_ld41_menu_add_button(menu, GROUP_ROOT, "randomize", &island->randomize);
 	_ld41_menu_add_submenu(menu, GROUP_ROOT, "bumps", GROUP_BUMPS);
 	_ld41_menu_add_submenu(menu, GROUP_BUMPS, "bump 1", GROUP_BUMPS_1);
 	_ld41_menu_add_slider(menu, GROUP_BUMPS_1, "angle", &island->blobs[0].angle, 0, whitgl_tau, true);
@@ -91,7 +99,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 
 	whitgl_ivec closed_draw_pos = {16+offset-setup_size.x*0.5, 16};
 	whitgl_sprite open_sprite = {1, {0, 96}, {10,14}};
-	whitgl_iaabb open_sprite_iaabb = {{closed_draw_pos.x, closed_draw_pos.y-6}, {closed_draw_pos.x+open_sprite.size.x, closed_draw_pos.y+open_sprite.size.y+6}};
+	whitgl_iaabb open_sprite_iaabb = {{closed_draw_pos.x, closed_draw_pos.y-6}, {closed_draw_pos.x+sprite.size.x*16+1+8, closed_draw_pos.y+open_sprite.size.y+6}};
 	if(whitgl_input_pressed(WHITGL_INPUT_MOUSE_LEFT) && whitgl_iaabb_intersects(mouse_box, open_sprite_iaabb))
 		pointer->up = true;
 
@@ -101,8 +109,12 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 	if(whitgl_input_pressed(WHITGL_INPUT_MOUSE_LEFT) && whitgl_iaabb_intersects(mouse_box, close_sprite_iaabb))
 		pointer->up = false;
 
-	if(whitgl_input_pressed(WHITGL_INPUT_START) || whitgl_input_pressed(WHITGL_INPUT_X))
+	if(whitgl_input_pressed(WHITGL_INPUT_START))
 		pointer->up = !pointer->up;
+	if(whitgl_input_pressed(WHITGL_INPUT_A) && !pointer->up)
+		pointer->up = true;
+ 	if(whitgl_input_pressed(WHITGL_INPUT_B) && pointer->up && pointer->depth == 1)
+ 		pointer->up = false;
 	if(pointer->up)
 		pointer->ever_opened = true;
 	if(pointer->up)
@@ -110,6 +122,16 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 	else
 		pointer->lerp = whitgl_fclamp(pointer->lerp-0.05, 0, 1);
 
+	pointer->idle_bounce = whitgl_fwrap(pointer->idle_bounce+1/240.0,0,1);
+	if(!pointer->up)
+		return;
+
+	if(mouse_moved && !pointer->mouse_interacting)
+	{
+		if(pointer->highlighted != -1)
+			pointer->last_valid = pointer->highlighted;
+		pointer->highlighted = -1;
+	}
 	whitgl_int i;
 	for(i=0; i<menu->num_items; i++)
 	{
@@ -136,8 +158,9 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 
 		if(whitgl_input_pressed(WHITGL_INPUT_B) && pointer->depth > 1)
 		{
+			if(menu->items[i].group == pointer->group[pointer->depth-1])
+				move_dir--;
 			pointer->depth--;
-			move_dir--;
 		}
 		if(menu->items[i].type == TYPE_SLIDER)
 		{
@@ -175,14 +198,27 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 				}
 			}
 		}
+		if(menu->items[i].type == TYPE_BUTTON)
+		{
+			if(whitgl_input_pressed(WHITGL_INPUT_A) || whitgl_input_pressed(WHITGL_INPUT_MOUSE_LEFT))
+			{
+				*menu->items[i].button.value = true;
+			}
+		}
 		draw_pos.y += 12;
 	}
 
-	if(whitgl_input_pressed(WHITGL_INPUT_DOWN))
-		move_dir++;
-	if(whitgl_input_pressed(WHITGL_INPUT_UP))
-		move_dir--;
-
+	if(pointer->highlighted == -1 && (whitgl_input_pressed(WHITGL_INPUT_DOWN) || whitgl_input_pressed(WHITGL_INPUT_UP)))
+	{
+		pointer->highlighted = pointer->last_valid;
+	}
+	else
+	{
+		if(whitgl_input_pressed(WHITGL_INPUT_DOWN))
+			move_dir++;
+		if(whitgl_input_pressed(WHITGL_INPUT_UP))
+			move_dir--;
+	}
 	whitgl_int trial = pointer->highlighted+move_dir;
 	while(trial >= 0 && trial < menu->num_items)
 	{
@@ -200,7 +236,6 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 	}
 
 	pointer->last_mouse = mouse_pos;
-	pointer->idle_bounce = whitgl_fwrap(pointer->idle_bounce+1/240.0,0,1);
 }
 void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec setup_size)
 {

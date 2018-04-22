@@ -220,8 +220,9 @@ int main()
 			// 	island_target = ld41_island_random(&seed);
 			// 	island_lerp = 0;
 			// }
-			if(whitgl_input_pressed(WHITGL_INPUT_Y))
+			if(island.randomize)
 			{
+				island.randomize = false;
 				island_prev = island;
 				island_target = ld41_island_random(&seed);
 				island_lerp = 0;
@@ -293,7 +294,7 @@ int main()
 
 		glFrontFace(GL_CCW);
 		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, whitgl_fmat_identity, view, perspective);
-		// whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_0, whitgl_fmat_identity, view, perspective);
+		whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_0, whitgl_fmat_identity, view, perspective);
 
 		whitgl_sys_enable_depth(false);
 
