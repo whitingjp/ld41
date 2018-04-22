@@ -13,8 +13,10 @@ typedef struct
 	whitgl_float rot_x;
 	whitgl_float rot_x_speed;
 	whitgl_float time_since_input_y;
+
+	whitgl_ivec last_mouse;
 } ld41_camera;
-static const ld41_camera ld41_camera_zero = {{0,0.2,-1.2}, {0,0,0}, 0, 0, 0.25, 0.2, 0, 1};
+static const ld41_camera ld41_camera_zero = {{0,0.2,-1.2}, {0,0,0}, 0, 0, 0.25, 0.2, 0, 1, {0,0}};
 
 void ld41_camera_update(ld41_camera* camera, whitgl_bool in_ui, whitgl_bool recording);
 whitgl_fmat ld41_camera_view(const ld41_camera* camera);

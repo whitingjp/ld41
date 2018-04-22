@@ -18,6 +18,17 @@ void ld41_camera_update(ld41_camera* camera, whitgl_bool in_ui, whitgl_bool reco
 			camera->time_since_input_y = 0;
 		camera->rot_y_speed = whitgl_fclamp(camera->rot_y_speed-joystick.x*0.01, -1, 1);
 		camera->rot_x_speed = whitgl_fclamp(camera->rot_x_speed-joystick.y*0.01, -1, 1);
+
+		whitgl_ivec mouse = whitgl_input_mouse_pos(1);
+		whitgl_fvec mouse_diff = whitgl_ivec_to_fvec(whitgl_ivec_sub(mouse, camera->last_mouse));
+		if(whitgl_input_held(WHITGL_INPUT_MOUSE_LEFT))
+		{
+			camera->rot_y_speed *= 0.9;
+			camera->rot_x_speed *= 0.9;
+			camera->rot_y_speed = whitgl_fclamp(camera->rot_y_speed-mouse_diff.x*0.005, -1, 1);
+			camera->rot_x_speed = whitgl_fclamp(camera->rot_x_speed-mouse_diff.y*0.005, -1, 1);
+		}
+		camera->last_mouse = mouse;
 	}
 
 	if(camera->time_since_input_y >= 1 && camera->rot_y_speed < 0.25)
