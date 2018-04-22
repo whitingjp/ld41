@@ -97,6 +97,7 @@ int main()
 	setup.pixel_size = 2;
 	setup.start_focused = false;
 	setup.name = "game";
+	setup.vsync = false;
 
 	WHITGL_LOG("Initiating sys");
 	if(!whitgl_sys_init(&setup))
@@ -323,17 +324,17 @@ int main()
 				gif_finalize(&gif);
 		}
 
-#if defined _WIN32
-		if(whitgl_sys_window_focused())
-			Sleep(10);
-		else
-			Sleep(100);
-#else
-		if(whitgl_sys_window_focused())
-			usleep(10*1000);
-		else
-			usleep(100*1000);
-#endif
+// #if defined _WIN32
+// 		if(whitgl_sys_window_focused())
+// 			Sleep(10);
+// 		else
+// 			Sleep(100);
+// #else
+// 		if(whitgl_sys_window_focused())
+// 			usleep(10*1000);
+// 		else
+// 			usleep(100*1000);
+// #endif
 	}
 
 	free(capture_data);

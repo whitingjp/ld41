@@ -20,6 +20,7 @@ typedef struct
 
 void ld41_color_ramp_palette(const ld41_color_ramp* ramp, whitgl_sys_color* colors, whitgl_int num_colors);
 
+#define MAX_BUMP_HEIGHT (0.5)
 typedef struct
 {
 	whitgl_float angle;
@@ -33,12 +34,14 @@ typedef struct
 	ld41_color_ramp color_ramp;
 	ld41_color_ramp sky_ramp;
 	ld41_height_blob blobs[NUM_BLOBS];
+	whitgl_float noise;
 } ld41_island;
 static const ld41_island ld41_island_zero =
 {
 	{{0,0,0},{0,0,0},{0,0,0}},
 	{{0,0,0},{0,0,0},{0,0,0}},
 	{{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+	0,
 };
 
 bool ld41_island_init();

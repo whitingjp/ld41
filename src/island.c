@@ -81,6 +81,7 @@ void ld41_color_ramp_palette(const ld41_color_ramp* ramp, whitgl_sys_color* colo
 ld41_island ld41_island_random(whitgl_random_seed* seed)
 {
 	ld41_island island = ld41_island_zero;
+
 	island.color_ramp.src.r = whitgl_random_float(seed);
 	island.color_ramp.src.g = whitgl_random_float(seed);
 	island.color_ramp.src.b = whitgl_random_float(seed);
@@ -99,9 +100,11 @@ ld41_island ld41_island_random(whitgl_random_seed* seed)
 	for(i=0; i<NUM_BLOBS; i++)
 	{
 		island.blobs[i].angle = whitgl_random_float(seed)*whitgl_tau;
-		island.blobs[i].dist = whitgl_random_float(seed);
-		island.blobs[i].height = whitgl_random_float(seed)*0.6;
+		island.blobs[i].dist = whitgl_random_float(seed)*1.8-0.9;
+		island.blobs[i].height = whitgl_random_float(seed)*MAX_BUMP_HEIGHT;
 	}
+	island.noise = whitgl_random_float(seed);
+
 	return island;
 }
 
@@ -122,6 +125,8 @@ ld41_island ld41_island_lerp(const ld41_island* src, const ld41_island* dest, wh
 		island.blobs[i].dist = whitgl_finterpolate(src->blobs[i].dist, dest->blobs[i].dist, t);
 		island.blobs[i].height = whitgl_finterpolate(src->blobs[i].height, dest->blobs[i].height, t);
 	}
+	island.noise = whitgl_finterpolate(src->noise, dest->noise, t);
+
 	return island;
 }
 
@@ -129,7 +134,7 @@ float _ld41_blob_height(const ld41_height_blob* blob, whitgl_fvec p)
 {
 	whitgl_fvec offset = whitgl_fvec_scale_val(whitgl_angle_to_fvec(blob->angle), blob->dist);
 	whitgl_float mag = whitgl_fvec_magnitude(whitgl_fvec_sub(p, offset));
-	whitgl_float factor = whitgl_fclamp(whitgl_fpow(whitgl_fclamp(1-mag,0,1),2), 0, 1);
+	whitgl_float factor = whitgl_fclamp(whitgl_fpow(whitgl_fclamp(1-mag*1.5,0,1),2), 0, 1);
 	return whitgl_fclamp(factor*blob->height, 0, 1);
 }
 
@@ -158,7 +163,7 @@ void ld41_island_update_model(const ld41_island* island)
 
 
 		whitgl_random_seed seed = whitgl_random_seed_init(top_down.x*1000+top_down.y*10000);
-		whitgl_float random = (whitgl_random_float(&seed)*2-1)*0;
+		whitgl_float random = (whitgl_random_float(&seed)*2-1)*island->noise;
 
 		_model_data[i*9+1] = _ld41_island_height_at_point(island, top_down)+random/8;
 	}

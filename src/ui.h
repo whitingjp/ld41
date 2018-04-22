@@ -31,6 +31,7 @@ typedef struct
 	whitgl_float* value;
 	whitgl_float min;
 	whitgl_float max;
+	whitgl_bool wrap;
 } ld41_slider_data;
 #define MAX_NAME_LENGTH (16)
 typedef struct
