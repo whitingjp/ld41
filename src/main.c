@@ -95,6 +95,13 @@ void main()\
 }\
 ";
 
+typedef enum
+{
+	MODE_NORMAL,
+	MODE_RECORDING,
+	MODE_POST_RECORDING,
+} ld41_mode;
+
 int main()
 {
 	WHITGL_LOG("Starting main.");
@@ -195,7 +202,7 @@ int main()
 	whitgl_sys_set_clear_color(colors[2]);
 
 	whitgl_int frames_remaining = 0;
-	whitgl_bool recording_gif = false;
+	ld41_mode game_mode = MODE_NORMAL;
 	whitgl_sys_color* capture_data = malloc(sizeof(whitgl_sys_color)*setup.size.x*setup.size.y);
 	gif_accumulator gif;
 
@@ -243,7 +250,7 @@ int main()
 					WHITGL_LOG("Save gif to %s", savePath);
 					gif_start(&gif, savePath, setup.size, colors, num_colors*2);
 					frames_remaining = 128;
-					recording_gif = true;
+					game_mode = MODE_RECORDING;
 				}
 				else if ( result == NFD_CANCEL )
 				{
@@ -256,7 +263,7 @@ int main()
 				whitgl_grab_focus();
 			}
 
-			if(!recording_gif)
+			if(game_mode == MODE_NORMAL)
 				ld41_menu_update(menu, &menu_pointer, setup.size);
 			else
 				menu_pointer.lerp = whitgl_fclamp(menu_pointer.lerp-0.01, 0, 1);
@@ -286,17 +293,23 @@ int main()
 			whitgl_sys_update_image_from_data(0, color_image_size, (unsigned char*)colors);
 			whitgl_sys_set_clear_color(colors[1]);
 
-			if(recording_gif)
+			if(game_mode != MODE_NORMAL)
 				progress_bar_lerp = whitgl_fclamp(progress_bar_lerp-0.05, 0, 1);
 			else
 				progress_bar_lerp = whitgl_fclamp(progress_bar_lerp+0.05, 0, 1);
+
+			if(game_mode == MODE_POST_RECORDING)
+			{
+				if(whitgl_input_pressed(WHITGL_INPUT_ANY))
+					game_mode = MODE_NORMAL;
+			}
 
 			if(whitgl_input_pressed(WHITGL_INPUT_ESC))
 				running = false;
 			if(whitgl_sys_should_close())
 				running = false;
 		}
-		if(recording_gif && menu_pointer.lerp <= 0)
+		if(game_mode == MODE_RECORDING && menu_pointer.lerp <= 0)
 			whitgl_sys_capture_frame_to_data(capture_data, true, 1);
 		whitgl_sys_draw_init(1);
 
@@ -307,7 +320,7 @@ int main()
 		whitgl_fvec3 up = {0,1,0};
 
 		whitgl_float render_time = time;
-		if(recording_gif)
+		if(game_mode == MODE_RECORDING)
 		{
 			if(menu_pointer.lerp > 0)
 			{
@@ -352,7 +365,7 @@ int main()
 
 		whitgl_sys_enable_depth(false);
 
-		if(!recording_gif || menu_pointer.lerp > 0.5)
+		if(game_mode == MODE_NORMAL || menu_pointer.lerp > 0.5)
 			ld41_menu_draw(menu, &menu_pointer, setup.size);
 
 		whitgl_ivec mid = {setup.size.x/2, setup.size.y-32};
@@ -363,9 +376,18 @@ int main()
 		progress_bar.b.x = progress_bar.a.x+size.x*(1-frames_remaining/128.0);
 		whitgl_sys_draw_iaabb(progress_bar, whitgl_sys_color_white);
 
+		if(game_mode == MODE_POST_RECORDING)
+		{
+			whitgl_sprite font = {1, {0,0}, {6,12}};
+			whitgl_ivec saved_pos = {mid.x-4.5*font.size.x, progress_bar.a.y-font.size.y*2-4};
+			whitgl_sys_draw_text(font, "gif saved", saved_pos);
+			whitgl_ivec press_pos = {mid.x-7*font.size.x, progress_bar.a.y-font.size.y*1-4};
+			whitgl_sys_draw_text(font, "press anything", press_pos);
+		}
+
 		whitgl_sys_draw_finish();
 
-		if(recording_gif && menu_pointer.lerp <= 0)
+		if(game_mode == MODE_RECORDING && menu_pointer.lerp <= 0)
 		{
 			gif_add_frame(&gif, capture_data, 4);
 			frames_remaining--;
@@ -373,7 +395,7 @@ int main()
 			{
 				gif_finalize(&gif);
 				time = 0;
-				recording_gif = false;
+				game_mode = MODE_POST_RECORDING;
 			}
 		}
 
