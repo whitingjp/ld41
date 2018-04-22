@@ -166,7 +166,7 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 		{
 			if(menu->items[i].group == pointer->group[pointer->depth-1])
 				move_dir--;
-			pointer->depth--;
+			pointer->depth=depth+1;
 		}
 		if(menu->items[i].type == TYPE_SLIDER)
 		{
@@ -194,10 +194,16 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 		{
 			if(whitgl_input_pressed(WHITGL_INPUT_A) || whitgl_input_pressed(WHITGL_INPUT_MOUSE_LEFT))
 			{
-				if(pointer->group[pointer->depth-1] == menu->items[i].submenu)
+				whitgl_bool found = false;
+				for(j=0; j<pointer->depth; j++)
 				{
-					pointer->depth--;
-				} else
+					if(pointer->group[j] == menu->items[i].submenu)
+					{
+						pointer->depth=j;
+						found = true;
+					}
+				}
+				if(!found)
 				{
 					pointer->depth = depth+1;
 					pointer->group[pointer->depth++] = menu->items[i].submenu;
