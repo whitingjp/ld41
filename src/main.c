@@ -96,7 +96,7 @@ int main()
 	setup.size.y = 220*1;
 	setup.pixel_size = 2;
 	setup.start_focused = false;
-	setup.name = "game";
+	setup.name = "Lofoten";
 	setup.vsync = false;
 
 	WHITGL_LOG("Initiating sys");
@@ -293,7 +293,7 @@ int main()
 
 		glFrontFace(GL_CCW);
 		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, whitgl_fmat_identity, view, perspective);
-		whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_0, whitgl_fmat_identity, view, perspective);
+		// whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_0, whitgl_fmat_identity, view, perspective);
 
 		whitgl_sys_enable_depth(false);
 

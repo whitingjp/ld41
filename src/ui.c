@@ -223,7 +223,7 @@ void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whi
 	whitgl_ivec close_sprite_frame = {1,0};
 	whitgl_sys_draw_sprite(open_sprite, close_sprite_frame, close_sprite_pos);
 	close_sprite_pos.x += 16;
-	whitgl_sys_draw_text(sprite, "island creator", close_sprite_pos);
+	whitgl_sys_draw_text(sprite, "lofoten", close_sprite_pos);
 
 	whitgl_int i;
 	for(i=0; i<menu->num_items; i++)

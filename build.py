@@ -59,4 +59,4 @@ def do_game(name, extra_cflags, data_types):
   n.build('all', 'phony', targets)
   n.default('all')
 
-do_game('Game', '-Iinput', ['png','ogg','obj'])
+do_game('Lofoten', '-Iinput', ['png','ogg','obj'])
