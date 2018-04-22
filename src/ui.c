@@ -74,8 +74,10 @@ void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 
 	_ld41_menu_add_slider(menu, GROUP_ROOT, "noise", &island->noise, 0, 1, false);
 }
-void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec draw_pos)
+void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec setup_size)
 {
+	whitgl_float offset = whitgl_fsmoothstep(1-pointer->lerp,0,1)*setup_size.x*0.5;
+	whitgl_ivec draw_pos = {16-offset, 16};
 	whitgl_sprite sprite = {1, {0,0}, {6,12}};
 
 	whitgl_ivec mouse_pos = whitgl_input_mouse_pos(2);
@@ -84,6 +86,22 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 	if(!whitgl_input_held(WHITGL_INPUT_MOUSE_LEFT))
 		pointer->mouse_interacting = false;
 	whitgl_int move_dir = 0;
+	whitgl_iaabb mouse_box = {{mouse_pos.x-6,mouse_pos.y}, {mouse_pos.x+7, mouse_pos.y+1}};
+
+	whitgl_ivec closed_draw_pos = {16+offset-setup_size.x*0.5, 16};
+	whitgl_sprite open_sprite = {1, {0, 96}, {21,21}};
+	whitgl_iaabb open_sprite_iaabb = {{closed_draw_pos.x, closed_draw_pos.y-6}, {closed_draw_pos.x+open_sprite.size.x, closed_draw_pos.y+open_sprite.size.y+6}};
+	if(whitgl_input_pressed(WHITGL_INPUT_MOUSE_LEFT) && whitgl_iaabb_intersects(mouse_box, open_sprite_iaabb))
+		pointer->up = true;
+
+	if(whitgl_input_pressed(WHITGL_INPUT_START) || whitgl_input_pressed(WHITGL_INPUT_X))
+		pointer->up = !pointer->up;
+	if(pointer->up)
+		pointer->ever_opened = true;
+	if(pointer->up)
+		pointer->lerp = whitgl_fclamp(pointer->lerp+0.05, 0, 1);
+	else
+		pointer->lerp = whitgl_fclamp(pointer->lerp-0.05, 0, 1);
 
 	whitgl_int i;
 	for(i=0; i<menu->num_items; i++)
@@ -99,7 +117,6 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 		whitgl_ivec p = draw_pos;
 		p.x += 6*2*depth;
 		whitgl_iaabb select_box = {{p.x-2-8, p.y-1}, {p.x+sprite.size.x*16+1+8, p.y+sprite.size.y}};
-		whitgl_iaabb mouse_box = {{mouse_pos.x-6,mouse_pos.y}, {mouse_pos.x+7, mouse_pos.y+1}};
 
 		if(!pointer->mouse_interacting && whitgl_iaabb_intersects(mouse_box, select_box) && mouse_moved)
 			pointer->highlighted = i;
@@ -176,10 +193,25 @@ void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_
 	}
 
 	pointer->last_mouse = mouse_pos;
+	pointer->idle_bounce = whitgl_fwrap(pointer->idle_bounce+1/240.0,0,1);
 }
-void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec draw_pos)
+void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec setup_size)
 {
+	whitgl_float offset = whitgl_fsmoothstep(1-pointer->lerp,0,1)*setup_size.x*0.5;
+	whitgl_ivec draw_pos = {16-offset, 16};
 	whitgl_sprite sprite = {1, {0,0}, {6,12}};
+
+
+	whitgl_ivec closed_draw_pos = {16+offset-220, 16};
+	whitgl_sprite open_sprite = {1, {0, 96}, {21,21}};
+	whitgl_ivec open_sprite_pos = closed_draw_pos;
+	whitgl_float bounce = (whitgl_fclamp(pointer->idle_bounce-0.9,0,0.1))*10*2;
+	if(bounce > 1)
+		bounce = 2-bounce;
+	bounce = whitgl_fsmoothstep(bounce, 0, 1);
+	if(!pointer->ever_opened)
+		open_sprite_pos.x += bounce*6;
+	whitgl_sys_draw_sprite(open_sprite, whitgl_ivec_zero, open_sprite_pos);
 
 	whitgl_int i;
 	for(i=0; i<menu->num_items; i++)
@@ -211,6 +243,7 @@ void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whi
 		if(menu->items[i].type == TYPE_SUBMENU)
 		{
 			whitgl_ivec marker_pos = {p.x+sprite.size.x*(strlen(menu->items[i].name)+1), p.y};
+
 			whitgl_bool opened = false;
 			for(j=0; j<pointer->depth; j++)
 				if(menu->items[i].submenu == pointer->group[j])

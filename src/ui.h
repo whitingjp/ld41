@@ -58,11 +58,17 @@ typedef struct
 	whitgl_int highlighted;
 	whitgl_ivec last_mouse;
 	whitgl_bool mouse_interacting;
+
+	whitgl_float idle_bounce;
+	whitgl_bool ever_opened;
+
+	whitgl_bool up;
+	whitgl_float lerp;
 } ld41_menu_pointer;
-static const ld41_menu_pointer ld41_menu_pointer_zero = {{GROUP_ROOT}, 1, 0, {0,0}, false};
+static const ld41_menu_pointer ld41_menu_pointer_zero = {{GROUP_ROOT}, 1, 0, {0,0}, false, 0, false, false, 0};
 
 void ld41_menu_zero(ld41_menu* menu, ld41_island* island);
-void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec draw_pos);
-void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec draw_pos);
+void ld41_menu_update(const ld41_menu* menu, ld41_menu_pointer* pointer, whitgl_ivec setup_size);
+void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whitgl_ivec setup_size);
 
 #endif // LD41_UI_H_

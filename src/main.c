@@ -194,8 +194,6 @@ int main()
 	ld41_menu_zero(menu, &island);
 	ld41_menu_pointer menu_pointer = ld41_menu_pointer_zero;
 
-	whitgl_bool ui_up = false;
-	whitgl_float ui_lerp = 0;
 	whitgl_fvec3 camera_to = whitgl_fvec3_zero;
 	whitgl_fvec3 camera_pos = whitgl_fvec3_zero;
 	whitgl_float time = 0;
@@ -228,28 +226,17 @@ int main()
 				island_target = ld41_island_random(&seed);
 				island_lerp = 0;
 			}
-			if(whitgl_input_pressed(WHITGL_INPUT_START) || whitgl_input_pressed(WHITGL_INPUT_X))
-				ui_up = !ui_up;
 
-			if(ui_up)
-				ui_lerp = whitgl_fclamp(ui_lerp+0.05, 0, 1);
-			else
-				ui_lerp = whitgl_fclamp(ui_lerp-0.05, 0, 1);
-
-			if(ui_up)
-			{
-				whitgl_ivec ui_offset = {16-whitgl_fsmoothstep(1-ui_lerp,0,1)*setup.size.x, 16};
-				ld41_menu_update(menu, &menu_pointer, ui_offset);
-				island.sky_ramp.src = island.color_ramp.src;
-				island.sky_ramp.ctrl = island.color_ramp.ctrl;
-			}
+			ld41_menu_update(menu, &menu_pointer, setup.size);
+			island.sky_ramp.src = island.color_ramp.src;
+			island.sky_ramp.ctrl = island.color_ramp.ctrl;
 
 			const whitgl_fvec3 regular_camera_to = {0,0,0};
 			const whitgl_fvec3 regular_camera_pos = {0,0.25,-1.3};
 			const whitgl_fvec3 ui_camera_to = {0.5,0,0};
 			const whitgl_fvec3 ui_camera_pos = {0,0.3,-1.6};
 
-			whitgl_float ui_lerp_smooth = whitgl_fsmoothstep(ui_lerp, 0, 1);
+			whitgl_float ui_lerp_smooth = whitgl_fsmoothstep(menu_pointer.lerp, 0, 1);
 			camera_to = whitgl_fvec3_interpolate(regular_camera_to, ui_camera_to, ui_lerp_smooth);
 			camera_pos = whitgl_fvec3_interpolate(regular_camera_pos, ui_camera_pos, ui_lerp_smooth);
 			if(island_lerp < 1)
@@ -310,9 +297,7 @@ int main()
 
 		whitgl_sys_enable_depth(false);
 
-		whitgl_ivec ui_offset = {16-whitgl_fsmoothstep(1-ui_lerp,0,1)*setup.size.x, 16};
-
-		ld41_menu_draw(menu, &menu_pointer, ui_offset);
+		ld41_menu_draw(menu, &menu_pointer, setup.size);
 
 
 		whitgl_sys_draw_finish();
