@@ -208,6 +208,19 @@ void ld41_menu_draw(const ld41_menu* menu, const ld41_menu_pointer* pointer, whi
 			whitgl_sys_draw_iaabb(left_box, highlight_color);
 		}
 		whitgl_sys_draw_text(sprite, menu->items[i].name, p);
+		if(menu->items[i].type == TYPE_SUBMENU)
+		{
+			whitgl_ivec marker_pos = {p.x+sprite.size.x*(strlen(menu->items[i].name)+1), p.y};
+			whitgl_bool opened = false;
+			for(j=0; j<pointer->depth; j++)
+				if(menu->items[i].submenu == pointer->group[j])
+					opened = true;
+			if(!opened)
+				whitgl_sys_draw_text(sprite, ">", marker_pos);
+			else
+				whitgl_sys_draw_text(sprite, "<", marker_pos);
+		}
+
 		if(menu->items[i].type == TYPE_SLIDER)
 		{
 			whitgl_iaabb slider_box = {{p.x+sprite.size.x*8, p.y}, {p.x+sprite.size.x*16+1+8, p.y+sprite.size.y-1}};
