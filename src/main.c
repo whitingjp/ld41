@@ -100,7 +100,7 @@ int main()
 	setup.pixel_size = 2;
 	setup.start_focused = false;
 	setup.name = "Lofoten";
-	setup.vsync = false;
+	setup.num_framebuffers = 2;
 
 	WHITGL_LOG("Initiating sys");
 	if(!whitgl_sys_init(&setup))
@@ -280,8 +280,8 @@ int main()
 				running = false;
 		}
 		if(frames_remaining > 0)
-			whitgl_sys_capture_frame_to_data(capture_data, true);
-		whitgl_sys_draw_init(0);
+			whitgl_sys_capture_frame_to_data(capture_data, true, 1);
+		whitgl_sys_draw_init(1);
 
 		whitgl_sys_enable_depth(true);
 
@@ -312,6 +312,17 @@ int main()
 		glFrontFace(GL_CCW);
 		whitgl_sys_draw_model(0, WHITGL_SHADER_MODEL, whitgl_fmat_identity, view, perspective);
 		whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_0, whitgl_fmat_identity, view, perspective);
+
+		whitgl_sys_draw_init(0);
+		whitgl_fmat ortho = whitgl_fmat_orthographic(0, setup.size.x, 0, setup.size.y, 0, 1.01);
+		whitgl_fvec3 pane_verts[4] =
+		{
+			{0,setup.size.y,0},
+			{setup.size.x,setup.size.y,0},
+			{0,0,0},
+			{setup.size.x,0,0},
+		};
+		whitgl_sys_draw_buffer_pane(1, pane_verts, WHITGL_SHADER_TEXTURE, whitgl_fmat_identity, whitgl_fmat_identity, ortho);
 
 		whitgl_sys_enable_depth(false);
 
