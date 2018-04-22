@@ -14,10 +14,13 @@
 #include <whitgl/sound.h>
 #include <whitgl/sys.h>
 #include <whitgl/timer.h>
+#include <nfd.h>
 
 #include <island.h>
 #include <gif.h>
 #include <ui.h>
+
+
 
 const char* model_src = "\
 #version 150\
@@ -207,11 +210,6 @@ int main()
 		{
 			whitgl_input_update();
 			time = whitgl_fwrap(time+1/480.0, 0, 1);
-			if(whitgl_input_pressed(WHITGL_INPUT_SELECT))
-			{
-				gif_start(&gif, setup.size, colors, num_colors*2);
-				frames_remaining = 128;
-			}
 			// if(frames_remaining % 32 == 0)
 			// {
 			// 	seed = whitgl_random_seed_init(whitgl_iwrap(frames_remaining/32+1, 0, 8)+8);
@@ -220,12 +218,32 @@ int main()
 			// 	island_target = ld41_island_random(&seed);
 			// 	island_lerp = 0;
 			// }
-			if(island.randomize)
+			if(island.button_randomize)
 			{
-				island.randomize = false;
+				island.button_randomize = false;
 				island_prev = island;
 				island_target = ld41_island_random(&seed);
 				island_lerp = 0;
+			}
+			if(island.button_save_gif)
+			{
+				island.button_save_gif = false;
+				nfdchar_t *savePath = NULL;
+				nfdresult_t result = NFD_SaveDialog( "gif", NULL, &savePath );
+				if ( result == NFD_OKAY )
+				{
+					WHITGL_LOG("Save gif to %s", savePath);
+					gif_start(&gif, savePath, setup.size, colors, num_colors*2);
+					frames_remaining = 128;
+				}
+				else if ( result == NFD_CANCEL )
+				{
+					WHITGL_LOG("User Cancelled");
+				}
+				else
+				{
+					WHITGL_LOG("Dialog Error: %s", NFD_GetError() );
+				}
 			}
 
 			ld41_menu_update(menu, &menu_pointer, setup.size);

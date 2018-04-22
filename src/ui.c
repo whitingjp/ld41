@@ -43,7 +43,8 @@ void _ld41_menu_add_button(ld41_menu* menu, ld41_menu_group group, const char* n
 void ld41_menu_zero(ld41_menu* menu, ld41_island* island)
 {
 	menu->num_items = 0;
-	_ld41_menu_add_button(menu, GROUP_ROOT, "randomize", &island->randomize);
+	_ld41_menu_add_button(menu, GROUP_ROOT, "randomize", &island->button_randomize);
+	_ld41_menu_add_button(menu, GROUP_ROOT, "save gif", &island->button_save_gif);
 	_ld41_menu_add_submenu(menu, GROUP_ROOT, "bumps", GROUP_BUMPS);
 	_ld41_menu_add_submenu(menu, GROUP_BUMPS, "bump 1", GROUP_BUMPS_1);
 	_ld41_menu_add_slider(menu, GROUP_BUMPS_1, "angle", &island->blobs[0].angle, 0, whitgl_tau, true);
