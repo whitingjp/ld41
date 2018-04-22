@@ -52,11 +52,14 @@ in vec3 fragmentPosition;\
 out vec4 outColor;\
 uniform sampler2D palette;\
 uniform float num_colors;\
+uniform sampler2D dither;\
 void main()\
 {\
 	if(fragmentPosition.y > 0.0)\
 		discard;\
-	if(mod(gl_FragCoord.y,2) < 1.5)\
+	vec4 dcol = texture( dither, vec2(fract(gl_FragCoord.xy/4.0f)));\
+	float test = clamp(1+fragmentPosition.y*1.5-0.4,0.0,0.6);\
+	if(dcol.r > test)\
 		discard;\
 	float band = (floor(-fragmentPosition.y*num_colors*1.2)+2)/num_colors;\
 	vec4 col = texture( palette, vec2(band, 0.25) );\
@@ -153,11 +156,13 @@ int main()
 
 	whitgl_shader reflection_shader = whitgl_shader_zero;
 	reflection_shader.fragment_src = reflection_src;
-	reflection_shader.num_uniforms = 2;
+	reflection_shader.num_uniforms = 3;
 	reflection_shader.uniforms[0].name = "palette";
 	reflection_shader.uniforms[0].type = WHITGL_UNIFORM_IMAGE;
 	reflection_shader.uniforms[1].name = "num_colors";
 	reflection_shader.uniforms[1].type = WHITGL_UNIFORM_FLOAT;
+	reflection_shader.uniforms[2].name = "dither";
+	reflection_shader.uniforms[2].type = WHITGL_UNIFORM_IMAGE;
 	if(!whitgl_change_shader( WHITGL_SHADER_EXTRA_1, reflection_shader))
 		return false;
 
@@ -166,6 +171,7 @@ int main()
 	whitgl_set_shader_image(WHITGL_SHADER_MODEL, 0, 0);
 	whitgl_set_shader_image(WHITGL_SHADER_EXTRA_0, 0, 0);
 	whitgl_set_shader_image(WHITGL_SHADER_EXTRA_1, 0, 0);
+	whitgl_set_shader_image(WHITGL_SHADER_EXTRA_1, 2, 2);
 
 	whitgl_set_shader_float(WHITGL_SHADER_MODEL, 1, num_colors);
 	whitgl_set_shader_float(WHITGL_SHADER_EXTRA_0, 1, num_colors);
@@ -198,6 +204,7 @@ int main()
 	whitgl_sys_add_image_from_data(0, color_image_size, (unsigned char*)colors);
 
 	whitgl_sys_add_image(1, "data/image/font.png");
+	whitgl_sys_add_image(2, "data/image/dither.png");
 
 	whitgl_sys_set_clear_color(colors[2]);
 
