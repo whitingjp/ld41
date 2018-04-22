@@ -1,3 +1,6 @@
 [submodule "whitgl"]
 	path = whitgl
 	url = git@github.com:whitingjp/whitgl.git
+[submodule "input/nativefiledialog"]
+	path = input/nativefiledialog
+	url = git@github.com:mlabbe/nativefiledialog.git
