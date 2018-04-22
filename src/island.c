@@ -186,15 +186,20 @@ float _ld41_island_height_at_point(const ld41_island* island, whitgl_fvec p)
 	return height;
 }
 
-void ld41_island_update_model(const ld41_island* island)
+float ld41_island_update_model(const ld41_island* island)
 {
+	whitgl_float amount_above = 0;
 	whitgl_int i;
 	for(i=0; i<_model_num_vertices; i++)
 	{
 		whitgl_fvec3 pos = {_model_data[i*9+0], 0, _model_data[i*9+2]};
 		whitgl_fvec top_down = {pos.x, pos.z};
-		_model_data[i*9+1] = _ld41_island_height_at_point(island, top_down);
+		float height = _ld41_island_height_at_point(island, top_down);
+		_model_data[i*9+1] = height;
+		if(height > 0)
+			amount_above += height;
 	}
 
 	whitgl_sys_update_model_from_data(0, _model_num_vertices, (char*)_model_data);
+	return amount_above;
 }
