@@ -34,7 +34,8 @@ def do_game(name, extra_cflags, data_types):
   n.newline()
   cflags, ldflags = build.flags(inputdir)
   cflags = cflags + ' -Iwhitgl/inc -Isrc ' + extra_cflags
-  ldflags += " -lole32 -luuid"
+  if build.plat == 'Windows':
+  	ldflags += " -lole32 -luuid"
   n.variable('cflags', cflags)
   n.variable('ldflags', ldflags)
   n.newline()
