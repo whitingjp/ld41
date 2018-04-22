@@ -18,6 +18,7 @@ typedef enum
 	GROUP_COLORS_MID,
 	GROUP_COLORS_TOP,
 	GROUP_COLORS_SKY,
+	GROUP_MOON,
 	GROUP_MAX,
 } ld41_menu_group;
 

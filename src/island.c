@@ -92,6 +92,10 @@ ld41_island ld41_island_random(whitgl_random_seed* seed)
 	island.color_ramp.ctrl.g = whitgl_random_float(seed);
 	island.color_ramp.ctrl.b = whitgl_random_float(seed);
 
+	island.moon.size = whitgl_random_float(seed);
+	island.moon.height = whitgl_random_float(seed);
+	island.moon.rotate = whitgl_random_float(seed);
+
 	island.sky_ramp = island.color_ramp;
 	island.sky_ramp.dest.r = whitgl_random_float(seed);
 	island.sky_ramp.dest.g = whitgl_random_float(seed);
@@ -118,7 +122,9 @@ ld41_island ld41_island_lerp(const ld41_island* src, const ld41_island* dest, wh
 	island.sky_ramp.src = ld41_float_color_blend(src->sky_ramp.src, dest->sky_ramp.src, t);
 	island.sky_ramp.dest = ld41_float_color_blend(src->sky_ramp.dest, dest->sky_ramp.dest, t);
 	island.sky_ramp.ctrl = ld41_float_color_blend(src->sky_ramp.ctrl, dest->sky_ramp.ctrl, t);
-
+	island.moon.size = whitgl_finterpolate(src->moon.size, dest->moon.size, t);
+	island.moon.height = whitgl_finterpolate(src->moon.height, dest->moon.height, t);
+	island.moon.rotate = whitgl_finterpolate(src->moon.rotate, dest->moon.rotate, t);
 	whitgl_int i;
 	for(i=0; i<NUM_BLOBS; i++)
 	{

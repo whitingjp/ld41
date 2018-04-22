@@ -364,9 +364,10 @@ int main()
 		whitgl_fvec moon_color_offset = {0.0, 0.5};
 		whitgl_fvec3 moon_pos = {4,0,0};
 		whitgl_fmat moon_translate = whitgl_fmat_translate(moon_pos);
-		whitgl_fmat moon_rotate = whitgl_fmat_rot_z(0.05*whitgl_tau);
-		whitgl_fmat moon_scale = whitgl_fmat_scale(whitgl_fvec3_val(0.05));
-		whitgl_fmat moon_model = whitgl_fmat_multiply(whitgl_fmat_multiply(moon_rotate, moon_translate), moon_scale);
+		whitgl_fmat moon_rotate_z = whitgl_fmat_rot_z(-0.05*whitgl_tau+0.3*island.moon.height*whitgl_tau);
+		whitgl_fmat moon_rotate_y = whitgl_fmat_rot_y(island.moon.rotate*whitgl_tau);
+		whitgl_fmat moon_scale = whitgl_fmat_scale(whitgl_fvec3_val(0.2*island.moon.size));
+		whitgl_fmat moon_model = whitgl_fmat_multiply(whitgl_fmat_multiply(whitgl_fmat_multiply(moon_rotate_y, moon_rotate_z), moon_translate), moon_scale);
 		whitgl_set_shader_fvec(WHITGL_SHADER_EXTRA_1, 2, moon_color_offset);
 		whitgl_sys_draw_model(1, WHITGL_SHADER_EXTRA_1, whitgl_fmat_multiply(whitgl_fmat_flipy, moon_model), view, perspective);
 		whitgl_set_shader_fvec(WHITGL_SHADER_EXTRA_1, 2, whitgl_fvec_zero);

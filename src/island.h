@@ -49,11 +49,19 @@ typedef struct
 	whitgl_float size;
 } ld41_height_blob;
 
+typedef struct
+{
+	whitgl_float size;
+	whitgl_float height;
+	whitgl_float rotate;
+} ld41_moon;
+
 #define NUM_BLOBS (5)
 typedef struct
 {
 	ld41_color_ramp color_ramp;
 	ld41_color_ramp sky_ramp;
+	ld41_moon moon;
 	ld41_height_blob blobs[NUM_BLOBS];
 	whitgl_bool button_randomize;
 	whitgl_bool button_save_gif;
@@ -63,6 +71,7 @@ static const ld41_island ld41_island_zero =
 {
 	{{0,0,0},{0,0,0},{0,0,0}},
 	{{0,0,0},{0,0,0},{0,0,0}},
+	{0,0,0},
 	{{TYPE_MOUND,0,0,0,0},{TYPE_MOUND,0,0,0,0},{TYPE_MOUND,0,0,0,0},{TYPE_MOUND,0,0,0,0}},
 	false,
 	false,
