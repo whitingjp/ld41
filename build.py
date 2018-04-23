@@ -40,6 +40,10 @@ def do_game(name, extra_cflags, data_types):
   n.variable('ldflags', ldflags)
   n.newline()
   build.rules(n)
+
+  n.rule('rc',
+    command='windres $in -O coff -o $out',
+    description='WINDRES $in $out')
   obj = build.walk_src(n, srcdir, objdir)
   obj += build.walk_src(n, joinp('input', 'gif_lib'), objdir)
   if build.plat == 'Darwin':
@@ -48,8 +52,11 @@ def do_game(name, extra_cflags, data_types):
     obj += n.build(joinp(objdir, 'nfd_win.o'), 'cxx', joinp('input', 'nativefiledialog', 'src', 'nfd_win.cpp'))
   obj += n.build(joinp(objdir, 'nfd_common.o'), 'cxx', joinp('input', 'nativefiledialog', 'src', 'nfd_common.c'))
   whitgl = [joinp('whitgl','build','lib','whitgl.a')]
+  ico = []
+  if build.plat == 'Windows':
+    ico += n.build(joinp(builddir, 'ico', '%s.res' % target), 'rc', joinp('windows', '%s.rc' % target))
   targets = []
-  targets += n.build(joinp(executabledir, target), 'link', obj+whitgl)
+  targets += n.build(joinp(executabledir, target), 'link', obj+whitgl+ico)
   n.newline()
 
   data = build.walk_data(n, data_in, data_out, data_types)
@@ -62,6 +69,11 @@ def do_game(name, extra_cflags, data_types):
   if build.plat == 'Darwin':
     targets += n.build(joinp(packagedir, 'Info.plist'), 'cp', joinp(data_in, 'osx', 'Info.plist'))
     targets += n.build(joinp(packagedir, 'Resources', 'Icon.icns'), 'icon', joinp('art', 'icon', 'icon.png'))
+
+  if build.plat == 'Windows':
+    targets += n.build(joinp(executabledir, 'libgcc_s_dw2-1.dll'), 'cp', joinp('windows', 'libgcc_s_dw2-1.dll'))
+    targets += n.build(joinp(executabledir, 'libwinpthread-1.dll'), 'cp', joinp('windows', 'libwinpthread-1.dll'))
+    targets += n.build(joinp(executabledir, 'libstdc++-6.dll'), 'cp', joinp('windows', 'libstdc++-6.dll'))
 
   n.build('all', 'phony', targets)
   n.default('all')
